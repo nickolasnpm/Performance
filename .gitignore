@@ -40,6 +40,8 @@ ScaffoldingReadMe.txt
 .env
 .vs
 .qodo
+.github
+.vscode
 
 # Others
 ~$*
