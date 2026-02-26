@@ -36,7 +36,7 @@ namespace Performance.Domain.Services
             }
         }
 
-        private async Task<UserResponseDTO<User>> OffsetPaginationAsync(OffsetPaginationRequest request)
+        private async Task<OffsetPaginationResponse<User>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
             if (request.Page < 1)
             {
@@ -61,7 +61,7 @@ namespace Performance.Domain.Services
             };
         }
 
-        private async Task<UserResponseDTO<User>> CursorPaginationAsync(CursorPaginationRequest request)
+        private async Task<CursorPaginationResponse<User>> CursorPaginationAsync(CursorPaginationRequest request)
         {
             if (request.Cursor < 0)
             {
@@ -91,8 +91,8 @@ namespace Performance.Domain.Services
                 hasPreviousPage = request.Cursor > 0;
             }
 
-            long? nextCursor = hasNextPage ? users.Last().Id : null;
-            long? previousCursor = hasPreviousPage ? users.First().Id : null;
+            long? nextCursor = hasNextPage ? result.Last().Id : null;
+            long? previousCursor = hasPreviousPage ? result.First().Id : null;
 
             return new CursorPaginationResponse<User>
             {
