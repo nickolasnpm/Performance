@@ -29,7 +29,7 @@ namespace Performance.Infrastructure
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.HasDefaultSchema("PerformanceTemp");
+            modelBuilder.HasDefaultSchema("Performance");
         }
     }
 }

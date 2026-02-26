@@ -6,20 +6,24 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Performance.Application;
 using Performance.API.Controllers;
+using Performance.Application;
+using Performance.Application.Common;
+using Performance.Application.DTO;
+using Performance.Application.Interface.Repository;
+using Performance.Application.Interface.Services;
+using Performance.Application.Interface.UnitOfWork;
 using Performance.Domain;
+using Performance.Domain.Services;
 using Performance.Infrastructure;
+using Performance.Infrastructure.Repositories;
+using Performance.Infrastructure.UnitOfWork;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Performance.Application.Interface.Repository;
-using Performance.Infrastructure.Repositories;
-using Performance.Application.DTO;
-using Performance.Application.Common;
 
 namespace BenchmarkSuite
 {
@@ -41,8 +45,11 @@ namespace BenchmarkSuite
 
         private ServiceProvider _serviceProvider;
         private IServiceScope _scope;
-        private IOffsetRepository _offsetRepo;
-        private ICursorRepository _cursorRepo;
+
+        private IUserServices _userServices;
+        private IUnitOfWork _unitOfWork;
+        private IUserRepositories _userRepositories;
+
         private ILogger<UserController> _logger;
 
         [GlobalSetup]
@@ -78,8 +85,11 @@ namespace BenchmarkSuite
             _serviceProvider = services.BuildServiceProvider();
 
             _scope = _serviceProvider.CreateScope();
-            _offsetRepo = _scope.ServiceProvider.GetRequiredService<IOffsetRepository>();
-            _cursorRepo = _scope.ServiceProvider.GetRequiredService<ICursorRepository>();
+
+            _userServices = _scope.ServiceProvider.GetRequiredService<IUserServices>();
+            //_unitOfWork = _scope.ServiceProvider.GetService<IUnitOfWork>();
+            //_userRepositories = _scope.ServiceProvider.GetService<IUserRepositories>();
+
             _logger = _scope.ServiceProvider.GetRequiredService<ILogger<UserController>>();
         }
 
@@ -87,8 +97,9 @@ namespace BenchmarkSuite
         public void IterationCleanup()
         {
             _scope?.Dispose();
-            _offsetRepo = null;
-            _cursorRepo = null;
+            _userServices = null;
+            //_unitOfWork?.Dispose();
+            //_userRepositories = null;
             _logger = null;
 
             _serviceProvider?.Dispose();
@@ -120,8 +131,9 @@ namespace BenchmarkSuite
                 )
             );
 
-            services.AddScoped<IOffsetRepository, OffsetRepository>();
-            services.AddScoped<ICursorRepository, CursorRepository>();
+            services.AddScoped<IUserServices, UserServices>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IUserRepositories, UserRepositories>();
 
             services.AddLogging(builder =>
             {
@@ -136,7 +148,7 @@ namespace BenchmarkSuite
 
         private async Task<IActionResult> ExecuteSingleRequest(UserRequestDTO request)
         {
-            var controller = new UserController(_offsetRepo, _cursorRepo, _logger);
+            var controller = new UserController(_userServices, _logger);
             return await controller.GetPaginatedUsers(request);
         }
 
@@ -156,10 +168,9 @@ namespace BenchmarkSuite
                     {
                         // Create a new scope for each user to ensure thread safety
                         using var scope = _serviceProvider.CreateScope();
-                        var offsetRepo = scope.ServiceProvider.GetRequiredService<IOffsetRepository>();
-                        var cursorRepo = scope.ServiceProvider.GetRequiredService<ICursorRepository>();
+                        var userService = scope.ServiceProvider.GetRequiredService<IUserServices>();
                         var logger = scope.ServiceProvider.GetRequiredService<ILogger<UserController>>();
-                        var controller = new UserController(offsetRepo, cursorRepo, logger);
+                        var controller = new UserController(userService, logger);
 
                         var request = requestFactory(userIndex);
                         var result = await controller.GetPaginatedUsers(request);
@@ -249,8 +260,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Offset,
-                offsetPagination = new OffsetPaginationRequest
+                PaginationType = PaginationType.Offset,
+                OffsetPagination = new OffsetPaginationRequest
                 {
                     Page = 1,
                     PageSize = PageSize
@@ -264,8 +275,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Offset,
-                offsetPagination = new OffsetPaginationRequest
+                PaginationType = PaginationType.Offset,
+                OffsetPagination = new OffsetPaginationRequest
                 {
                     Page = 1000,
                     PageSize = PageSize
@@ -279,8 +290,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Offset,
-                offsetPagination = new OffsetPaginationRequest
+                PaginationType = PaginationType.Offset,
+                OffsetPagination = new OffsetPaginationRequest
                 {
                     Page = 2000,
                     PageSize = PageSize
@@ -298,8 +309,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Cursor,
-                cursorPagination = new CursorPaginationRequest
+                PaginationType = PaginationType.Cursor,
+                CursorPagination = new CursorPaginationRequest
                 {
                     Cursor = 0,
                     PageSize = PageSize
@@ -313,8 +324,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Cursor,
-                cursorPagination = new CursorPaginationRequest
+                PaginationType = PaginationType.Cursor,
+                CursorPagination = new CursorPaginationRequest
                 {
                     Cursor = 50000,
                     PageSize = PageSize
@@ -328,8 +339,8 @@ namespace BenchmarkSuite
         {
             var request = new UserRequestDTO
             {
-                PaginationType = (int)PaginationType.Cursor,
-                cursorPagination = new CursorPaginationRequest
+                PaginationType = PaginationType.Cursor,
+                CursorPagination = new CursorPaginationRequest
                 {
                     Cursor = 99950,
                     PageSize = PageSize
@@ -362,8 +373,8 @@ namespace BenchmarkSuite
 
                 return new UserRequestDTO
                 {
-                    PaginationType = (int)PaginationType.Offset,
-                    offsetPagination = new OffsetPaginationRequest
+                    PaginationType = PaginationType.Offset,
+                    OffsetPagination = new OffsetPaginationRequest
                     {
                         Page = page,
                         PageSize = PageSize
@@ -392,8 +403,8 @@ namespace BenchmarkSuite
 
                 return new UserRequestDTO
                 {
-                    PaginationType = (int)PaginationType.Cursor,
-                    cursorPagination = new CursorPaginationRequest
+                    PaginationType = PaginationType.Cursor,
+                    CursorPagination = new CursorPaginationRequest
                     {
                         Cursor = cursor,
                         PageSize = PageSize
@@ -413,8 +424,8 @@ namespace BenchmarkSuite
                 {
                     return new UserRequestDTO
                     {
-                        PaginationType = (int)PaginationType.Offset,
-                        offsetPagination = new OffsetPaginationRequest
+                        PaginationType = PaginationType.Offset,
+                        OffsetPagination = new OffsetPaginationRequest
                         {
                             Page = _random.Next(1, Math.Min(100, _totalPages + 1)),
                             PageSize = PageSize
@@ -425,8 +436,8 @@ namespace BenchmarkSuite
                 {
                     return new UserRequestDTO
                     {
-                        PaginationType = (int)PaginationType.Cursor,
-                        cursorPagination = new CursorPaginationRequest
+                        PaginationType = PaginationType.Cursor,
+                        CursorPagination = new CursorPaginationRequest
                         {
                             Cursor = _random.Next(0, Math.Max(0, _totalRecords - PageSize)),
                             PageSize = PageSize
