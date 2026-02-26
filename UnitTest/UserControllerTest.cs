@@ -53,7 +53,7 @@ namespace UnitTest
                     Data = new List<User>(),
                     TotalCount = 0,
                     NextCursor = 100,
-                    PreviousCursor = 0
+                    PreviousCursor = 1,
                 }
             ]
         ];

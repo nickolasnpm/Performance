@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BenchmarkSuite/BenchmarkSuite.csproj" Id="f0b17174-a0e1-4153-bb40-a9e3faec93b8" />
+  <Project Path="IntegrationTest/IntegrationTest.csproj" Id="1b1c1f10-acb9-478c-b75e-ab6b42259828" />
   <Project Path="Performance/Performance.csproj" />
   <Project Path="UnitTest/UnitTest.csproj" Id="5ce54abc-6e8e-4396-9862-267dc8b1d740" />
 </Solution>
