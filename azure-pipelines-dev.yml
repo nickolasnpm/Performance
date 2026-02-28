@@ -33,7 +33,7 @@ stages:
               containerRegistry: '$(serviceConnection)'
               repository: '$(imageName)'
               dockerfile: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-              buildContext: '$(Build.SourcesDirectory)/Performance'
+              buildContext: '$(Build.SourcesDirectory)'
               tags: |
                 $(imageTag)
                 latest
@@ -49,3 +49,43 @@ stages:
               tags: |
                 $(imageTag)
                 latest
+                
+  # ─── CD Stage: Runs only after merge to main ───────────────────────────────
+  - stage: Deploy
+    displayName: 'Deploy to Raspberry Pi'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToPi
+        displayName: 'Pull & Run Container on Raspberry Pi'
+        environment: 'raspberry-pi'
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals raspi4
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    docker login $(acrName) \
+                      --username $ACR_USERNAME \
+                      --password $ACR_PASSWORD
+                  displayName: 'Authenticate Docker with ACR'
+                  env:
+                    ACR_USERNAME: $(acrUsername)
+                    ACR_PASSWORD: $(acrPassword)
+                - script: |
+                    docker pull $(acrName)/$(imageName):latest
+                  displayName: 'Pull Latest Image from ACR'
+                - script: |
+                    docker stop your-app-container || true
+                    docker rm your-app-container || true
+                  displayName: 'Remove Old Container'
+                - script: |
+                    docker run -d \
+                      --name your-app-container \
+                      --restart unless-stopped \
+                      -p 8080:8080 \
+                      $(acrName)/$(imageName):latest
+                  displayName: 'Run New Container'
