@@ -12,7 +12,7 @@ variables:
   acrName: 'testregistryname.azurecr.io'
   imageName: 'performance'
   imageTag: '$(Build.BuildId)'
-  serviceConnection: 'testregistryname' # From Project Settings → Service Connections
+  serviceConnection: 'testregistryname'
 
 stages:
 
@@ -23,7 +23,7 @@ stages:
       - job: BuildImage
         displayName: 'Build Docker Image for ARM64'
         pool:
-          vmImage: 'ubuntu-latest'   # Hosted agent handles the build
+          vmImage: 'ubuntu-latest'
         steps:
 
           - task: Docker@2
@@ -32,8 +32,8 @@ stages:
               command: build
               containerRegistry: '$(serviceConnection)'
               repository: '$(imageName)'
-              dockerfile: 'Dockerfile'
-              buildContext: '.'
+              dockerfile: '$(Build.SourcesDirectory)/Performance/Performance/Dockerfile'
+              buildContext: '$(Build.SourcesDirectory)/Performance/Performance'
               tags: |
                 $(imageTag)
                 latest
