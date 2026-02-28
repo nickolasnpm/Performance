@@ -26,6 +26,15 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
 
+          - script: |
+              echo "=== Repo root ==="
+              ls -la $(Build.SourcesDirectory)
+              echo "=== Searching for ALL Dockerfiles ==="
+              find $(Build.SourcesDirectory) -name "Dockerfile" -type f
+              echo "=== Full directory tree ==="
+              find $(Build.SourcesDirectory) -type d
+            displayName: 'Debug: Find Dockerfile'
+
           - task: Docker@2
             displayName: 'Build Docker Image'
             inputs:
