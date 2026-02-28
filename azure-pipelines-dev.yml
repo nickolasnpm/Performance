@@ -21,9 +21,11 @@ stages:
     displayName: 'Build & Push Docker Image'
     jobs:
       - job: BuildImage
-        displayName: 'Build Docker Image for ARM64'
+        displayName: 'Build Docker Image'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'      
+          demands:
+            - Agent.Name -equals raspi4
         steps:
 
           - task: Docker@2
@@ -37,7 +39,6 @@ stages:
               tags: |
                 $(imageTag)
                 latest
-              arguments: '--platform linux/arm64'
 
           - task: Docker@2
             displayName: 'Push to ACR'
