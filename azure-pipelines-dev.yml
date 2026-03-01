@@ -51,11 +51,16 @@ stages:
                 $(imageTag)
                 latest
                 
-  # ─── CD Stage: Runs only after merge to main ───────────────────────────────
+  # ─── CD Stage: Runs only after merge to develop ────────────────────────────
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi'
     dependsOn: Build
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], 'refs/heads/develop'),
+        eq(variables['Build.Reason'], 'IndividualCI')
+      )
     jobs:
       - deployment: DeployToPi
         displayName: 'Pull & Run Container on Raspberry Pi'
