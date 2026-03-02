@@ -99,11 +99,11 @@ stages:
                 - script: |
                     docker run -d \
                       --name performance-webapi \
-                      -e ASPNETCORE_ENVIRONMENT=$(appEnv) \ 
+                      -e ASPNETCORE_ENVIRONMENT=$(appEnv) \
+                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
                       --network performance-network \
                       --restart unless-stopped \
                       -p 8080:8080 \
-                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
                       $(acrName)/$(imageName):latest
                   displayName: 'Run New Container'
                   env:
