@@ -42,7 +42,12 @@ stages:
 
           - task: Docker@2
             displayName: 'Push to ACR'
-            condition: and(succeeded(), eq(variables['Build.Reason'], 'IndividualCI'))
+            # ✅ Skip ONLY on PR builds. Allow on merge (IndividualCI) and manual runs.
+            condition: |
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest')
+              )
             inputs:
               command: push
               containerRegistry: '$(serviceConnection)'
@@ -51,15 +56,16 @@ stages:
                 $(imageTag)
                 latest
                 
-  # ─── CD Stage: Runs only after merge to develop ────────────────────────────
+  # ─── CD Stage: Runs only after merge to develop or manual trigger ──────────
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi'
     dependsOn: Build
+    # ✅ Skip ONLY on PR builds. Allow on merge (IndividualCI) and manual runs.
     condition: |
       and(
         succeeded(),
         eq(variables['Build.SourceBranch'], 'refs/heads/develop'),
-        eq(variables['Build.Reason'], 'IndividualCI')
+        ne(variables['Build.Reason'], 'PullRequest')
       )
     jobs:
       - deployment: DeployToPi
