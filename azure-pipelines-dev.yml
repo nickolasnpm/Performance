@@ -9,7 +9,7 @@ pr:
       - develop
 
 variables:
-  acrName: 'testregistryname.azurecr.io'
+  acrName: 'testregistryname-a7bdb0hecja0hvav.azurecr.io'
   imageName: 'performance'
   imageTag: '$(Build.BuildId)'
   serviceConnection: 'testregistryname'
