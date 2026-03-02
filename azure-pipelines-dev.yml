@@ -42,7 +42,6 @@ stages:
 
           - task: Docker@2
             displayName: 'Push to ACR'
-            # ✅ Skip ONLY on PR builds. Allow on merge (IndividualCI) and manual runs.
             condition: |
               and(
                 succeeded(),
@@ -60,7 +59,6 @@ stages:
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi'
     dependsOn: Build
-    # ✅ Skip ONLY on PR builds. Allow on merge (IndividualCI) and manual runs.
     condition: |
       and(
         succeeded(),
@@ -87,17 +85,24 @@ stages:
                   env:
                     ACR_USERNAME: $(acrUsername)
                     ACR_PASSWORD: $(acrPassword)
+
                 - script: |
                     docker pull $(acrName)/$(imageName):latest
                   displayName: 'Pull Latest Image from ACR'
+
                 - script: |
-                    docker stop your-app-container || true
-                    docker rm your-app-container || true
+                    docker stop performance-webapi || true
+                    docker rm performance-webapi || true
                   displayName: 'Remove Old Container'
+
                 - script: |
                     docker run -d \
-                      --name your-app-container \
+                      --name performance-webapi \
+                      --network performance-network \
                       --restart unless-stopped \
                       -p 8080:8080 \
+                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
                       $(acrName)/$(imageName):latest
                   displayName: 'Run New Container'
+                  env:
+                    DefaultConnection: $(DefaultConnection)
