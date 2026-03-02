@@ -10,6 +10,7 @@ using Performance.Domain.Services;
 using Performance.Infrastructure;
 using Performance.Infrastructure.Repositories;
 using Performance.Infrastructure.UnitOfWork;
+using Performance.Infrastructure.Extensions;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +61,11 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepositories, UserRepositories>();
 
 var app = builder.Build();
+
+if (!app.Environment.IsProduction())
+{
+    await app.ApplyMigrations();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
