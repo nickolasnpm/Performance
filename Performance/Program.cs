@@ -48,6 +48,8 @@ builder.Services.AddDbContextPool<UserDbContext>(options =>
                 errorNumbersToAdd: null
             )
             .CommandTimeout(300);
+
+            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "Performance");
         }
     )
     .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
