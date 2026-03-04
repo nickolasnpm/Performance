@@ -14,21 +14,21 @@ variables:
   imageTag: '$(Build.BuildId)'
   serviceConnection: 'testregistryname'
   appEnv: 'Development'
-  sqlContainerName: 'performance-sqlserver'
-  apiContainerName: 'performance-webapi'
-  dockerNetwork: 'performance-network'
+  env: 'dev'
+  sqlContainerName: 'performance-sqlserver-dev'
+  apiContainerName: 'performance-webapi-dev'
+  dockerNetwork: 'performance-network-dev'
   sqlPid: 'Developer'
   sqlPort: '1433'
   apiPort: '8080'
   dbName: 'POC'
-  dbUser: 'poc_app'
-  # ── Secrets (values come from Pipeline Variables) ──────────────────────────
-  SqlSaPassword: $(SqlSaPassword)
-  DbUserId: $(DbUserId)
-  DbUserPassword: $(DbUserPassword)
-  DefaultConnection: $(DefaultConnection)
-  acrUsername: $(acrUsername)
-  acrPassword: $(acrPassword)
+  # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
+  # SqlSaPassword
+  # DbUserId
+  # DbUserPassword
+  # DefaultConnection
+  # acrUsername
+  # acrPassword
 
 stages:
 
