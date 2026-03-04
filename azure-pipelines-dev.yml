@@ -13,7 +13,22 @@ variables:
   imageName: 'performance'
   imageTag: '$(Build.BuildId)'
   serviceConnection: 'testregistryname'
-  appEnv: 'Development' 
+  appEnv: 'Development'
+  sqlContainerName: 'performance-sqlserver'
+  apiContainerName: 'performance-webapi'
+  dockerNetwork: 'performance-network'
+  sqlPid: 'Developer'
+  sqlPort: '1433'
+  apiPort: '8080'
+  dbName: 'POC'
+  dbUser: 'poc_app'
+  # ── Secrets (values come from Pipeline Variables) ──────────────────────────
+  SqlSaPassword: $(SqlSaPassword)
+  DbUserId: $(DbUserId)
+  DbUserPassword: $(DbUserPassword)
+  DefaultConnection: $(DefaultConnection)
+  acrUsername: $(acrUsername)
+  acrPassword: $(acrPassword)
 
 stages:
 
@@ -24,7 +39,7 @@ stages:
       - job: BuildImage
         displayName: 'Build Docker Image'
         pool:
-          name: 'Default'      
+          name: 'Default'
           demands:
             - Agent.Name -equals raspi4
         steps:
@@ -55,7 +70,7 @@ stages:
               tags: |
                 $(imageTag)
                 latest
-                
+
   # ─── CD Stage: Runs only after merge to develop or manual trigger ──────────
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi'
@@ -78,33 +93,112 @@ stages:
           runOnce:
             deploy:
               steps:
+
+                # ─── Authenticate ───────────────────────────────────────────
                 - script: |
                     docker login $(acrName) \
-                      --username $ACR_USERNAME \
-                      --password $ACR_PASSWORD
+                      --username $(acrUsername) \
+                      --password $(acrPassword)
                   displayName: 'Authenticate Docker with ACR'
-                  env:
-                    ACR_USERNAME: $(acrUsername)
-                    ACR_PASSWORD: $(acrPassword)
 
+                # ─── Network ────────────────────────────────────────────────
+                - script: |
+                    docker network create $(dockerNetwork) 2>/dev/null || true
+                  displayName: 'Create Docker Network (if not exists)'
+
+                # ─── SQL Server ─────────────────────────────────────────────
+                - script: |
+                    docker start $(sqlContainerName) 2>/dev/null || docker run -d \
+                      --name $(sqlContainerName) \
+                      --network $(dockerNetwork) \
+                      --restart unless-stopped \
+                      -e ACCEPT_EULA=Y \
+                      -e MSSQL_SA_PASSWORD=$(SqlSaPassword) \
+                      -e MSSQL_PID=$(sqlPid) \
+                      -p $(sqlPort):1433 \
+                      --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '$(SqlSaPassword)' -Q 'SELECT 1'" \
+                      --health-interval 10s \
+                      --health-timeout 5s \
+                      --health-retries 5 \
+                      --health-start-period 20s \
+                      mcr.microsoft.com/azure-sql-edge:latest
+                  displayName: 'Start SQL Server Container (if not running)'
+
+                - script: |
+                    echo "Waiting for SQL Server to be ready..."
+                    until docker exec $(sqlContainerName) /opt/mssql-tools/bin/sqlcmd \
+                      -S localhost -U sa -P "$(SqlSaPassword)" \
+                      -Q "SELECT 1" &>/dev/null; do
+                      echo "SQL not ready yet, retrying in 5s..."
+                      sleep 5
+                    done
+                    echo "SQL Server is ready!"
+                  displayName: 'Wait for SQL Server to be Ready'
+
+                - script: |
+                    docker exec $(sqlContainerName) /opt/mssql-tools/bin/sqlcmd \
+                      -S localhost -U sa -P "$(SqlSaPassword)" \
+                      -Q "
+                        IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$(dbName)')
+                        BEGIN CREATE DATABASE $(dbName) END;
+                        GO
+                        USE $(dbName);
+                        GO
+                        IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = '$(DbUserId)')
+                        BEGIN
+                          CREATE LOGIN $(DbUserId) WITH PASSWORD = '$(DbUserPassword)';
+                          CREATE USER $(DbUserId) FOR LOGIN $(DbUserId);
+                          ALTER ROLE db_owner ADD MEMBER $(DbUserId);
+                        END;
+                        GO
+                      "
+                  displayName: 'Initialize Database and poc_app Login'
+
+                # ─── API ────────────────────────────────────────────────────
                 - script: |
                     docker pull $(acrName)/$(imageName):latest
                   displayName: 'Pull Latest Image from ACR'
 
                 - script: |
-                    docker stop performance-webapi || true
-                    docker rm performance-webapi || true
+                    docker stop $(apiContainerName) || true
+                    docker rm $(apiContainerName) || true
                   displayName: 'Remove Old Container'
 
                 - script: |
                     docker run -d \
-                      --name performance-webapi \
+                      --name $(apiContainerName) \
+                      --network $(dockerNetwork) \
+                      --restart unless-stopped \
                       -e ASPNETCORE_ENVIRONMENT=$(appEnv) \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      --network performance-network \
-                      --restart unless-stopped \
-                      -p 8080:8080 \
+                      -p $(apiPort):8080 \
+                      --health-cmd "curl -f http://localhost:8080/health || exit 1" \
+                      --health-interval 15s \
+                      --health-timeout 5s \
+                      --health-retries 3 \
+                      --health-start-period 30s \
                       $(acrName)/$(imageName):latest
                   displayName: 'Run New Container'
-                  env:
-                    DefaultConnection: $(DefaultConnection)
+
+                # ─── Verify ─────────────────────────────────────────────────
+                - script: |
+                    echo "Verifying containers are on the same network..."
+                    docker network inspect $(dockerNetwork) \
+                      --format '{{range .Containers}}{{.Name}} → {{end}}'
+                  displayName: 'Verify Network Membership'
+
+                # ─── Health Check Verification ───────────────────────────────
+                - script: |
+                    echo "Checking container health status..."
+
+                    for container in $(sqlContainerName) $(apiContainerName); do
+                      echo "Waiting for $container to be healthy..."
+                      until [ "$(docker inspect --format '{{.State.Health.Status}}' $container)" = "healthy" ]; do
+                        echo "$container not healthy yet, retrying in 5s..."
+                        sleep 5
+                      done
+                      echo "$container is healthy!"
+                    done
+
+                    echo "All containers are healthy!"
+                  displayName: 'Verify Container Health'
