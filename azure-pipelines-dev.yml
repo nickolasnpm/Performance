@@ -22,6 +22,8 @@ variables:
   sqlPort: '1433'
   apiPort: '8080'
   dbName: 'POC'
+  platform: 'linux/arm64'
+  ubuntuImage: 'ubuntu:24.04'
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # SqlSaPassword
   # DbUserId
@@ -145,23 +147,32 @@ stages:
                 - script: |
                     docker run --rm \
                       --network $(dockerNetwork) \
-                      mcr.microsoft.com/mssql-tools \
-                      /opt/mssql-tools/bin/sqlcmd \
-                        -S $(sqlContainerName),1433 -U sa -P "$(SqlSaPassword)" -C \
-                        -Q "
-                          IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$(dbName)')
-                          BEGIN CREATE DATABASE $(dbName) END;
-                          GO
-                          USE $(dbName);
-                          GO
-                          IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = '$(DbUserId)')
-                          BEGIN
-                            CREATE LOGIN $(DbUserId) WITH PASSWORD = '$(DbUserPassword)';
-                            CREATE USER $(DbUserId) FOR LOGIN $(DbUserId);
-                            ALTER ROLE db_owner ADD MEMBER $(DbUserId);
-                          END;
-                          GO
-                        "
+                      --platform $(platform) \
+                        $(ubuntuImage) \
+                      /bin/bash -c "
+                        apt-get update -y && apt-get install -y curl tar &&
+                        curl -L https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-arm64.tar.gz \
+                          | tar xz -C /usr/local/bin &&
+                        sqlcmd \
+                          -S $(sqlContainerName),1433 \
+                          -U sa \
+                          -P '$(SqlSaPassword)' \
+                          --trust-server-certificate \
+                          -Q \"
+                            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$(dbName)')
+                            BEGIN CREATE DATABASE $(dbName) END;
+                            GO
+                            USE $(dbName);
+                            GO
+                            IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = '$(DbUserId)')
+                            BEGIN
+                              CREATE LOGIN $(DbUserId) WITH PASSWORD = '$(DbUserPassword)';
+                              CREATE USER $(DbUserId) FOR LOGIN $(DbUserId);
+                              ALTER ROLE db_owner ADD MEMBER $(DbUserId);
+                            END;
+                            GO
+                          \"
+                      "
                   displayName: 'Initialize Database and poc_app Login'
 
                 # ─── API ────────────────────────────────────────────────────
