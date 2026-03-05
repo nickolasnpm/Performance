@@ -15,19 +15,10 @@ variables:
   serviceConnection: 'testregistryname'
   appEnv: 'Development'
   env: 'dev'
-  sqlContainerName: 'performance-sqlserver-dev'
   apiContainerName: 'performance-webapi-dev'
   dockerNetwork: 'performance-network-dev'
-  sqlPid: 'Developer'
-  sqlPort: '1433'
   apiPort: '8080'
-  dbName: 'POC'
-  platform: 'linux/arm64'
-  ubuntuImage: 'ubuntu:24.04'
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
-  # SqlSaPassword
-  # DbUserId
-  # DbUserPassword
   # DefaultConnection
   # acrUsername
   # acrPassword
@@ -103,78 +94,6 @@ stages:
                       --password $(acrPassword)
                   displayName: 'Authenticate Docker with ACR'
 
-                # ─── Network ────────────────────────────────────────────────
-                - script: |
-                    docker network create $(dockerNetwork) 2>/dev/null || true
-                  displayName: 'Create Docker Network (if not exists)'
-
-                # ─── SQL Server ─────────────────────────────────────────────
-                - script: |
-                    docker start $(sqlContainerName) 2>/dev/null || docker run -d \
-                      --name $(sqlContainerName) \
-                      --network $(dockerNetwork) \
-                      --restart unless-stopped \
-                      -e ACCEPT_EULA=Y \
-                      -e MSSQL_SA_PASSWORD=$(SqlSaPassword) \
-                      -e MSSQL_PID=$(sqlPid) \
-                      -p $(sqlPort):1433 \
-                      --health-cmd "bash -c 'cat /dev/null > /dev/tcp/localhost/1433'" \
-                      --health-interval 10s \
-                      --health-timeout 5s \
-                      --health-retries 5 \
-                      --health-start-period 20s \
-                      mcr.microsoft.com/azure-sql-edge:latest
-                  displayName: 'Start SQL Server Container (if not running)'
-
-                - script: |
-                    echo "Waiting for SQL Server to be ready..."
-                    TIMEOUT=60
-                    ELAPSED=0
-                    until docker exec $(sqlContainerName) bash -c \
-                      "cat /dev/null > /dev/tcp/localhost/1433" &>/dev/null; do
-                      if [ $ELAPSED -ge $TIMEOUT ]; then
-                        echo "##[error]SQL Server did not become ready within ${TIMEOUT} seconds. Aborting."
-                        exit 1
-                      fi
-                      echo "SQL not ready yet, retrying in 5s... (${ELAPSED}s / ${TIMEOUT}s)"
-                      sleep 5
-                      ELAPSED=$((ELAPSED + 5))
-                    done
-                    echo "SQL Server is ready! (took ${ELAPSED}s)"
-                  displayName: 'Wait for SQL Server to be Ready'
-
-                # ─── Initialize Database & poc_app Login ────────────────────
-                - script: |
-                    docker run --rm \
-                      --network $(dockerNetwork) \
-                      --platform $(platform) \
-                        $(ubuntuImage) \
-                      /bin/bash -c "
-                        apt-get update -y && apt-get install -y curl tar &&
-                        curl -L https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-arm64.tar.gz \
-                          | tar xz -C /usr/local/bin &&
-                        sqlcmd \
-                          -S $(sqlContainerName),1433 \
-                          -U sa \
-                          -P '$(SqlSaPassword)' \
-                          --trust-server-certificate \
-                          -Q \"
-                            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$(dbName)')
-                            BEGIN CREATE DATABASE $(dbName) END;
-                            GO
-                            USE $(dbName);
-                            GO
-                            IF NOT EXISTS (SELECT name FROM sys.server_principals WHERE name = '$(DbUserId)')
-                            BEGIN
-                              CREATE LOGIN $(DbUserId) WITH PASSWORD = '$(DbUserPassword)';
-                              CREATE USER $(DbUserId) FOR LOGIN $(DbUserId);
-                              ALTER ROLE db_owner ADD MEMBER $(DbUserId);
-                            END;
-                            GO
-                          \"
-                      "
-                  displayName: 'Initialize Database and poc_app Login'
-
                 # ─── API ────────────────────────────────────────────────────
                 - script: |
                     docker pull $(acrName)/$(imageName):latest
@@ -201,25 +120,12 @@ stages:
                       $(acrName)/$(imageName):latest
                   displayName: 'Run New Container'
 
-                # ─── Verify ─────────────────────────────────────────────────
-                - script: |
-                    echo "Verifying containers are on the same network..."
-                    docker network inspect $(dockerNetwork) \
-                      --format '{{range .Containers}}{{.Name}} → {{end}}'
-                  displayName: 'Verify Network Membership'
-
                 # ─── Health Check Verification ───────────────────────────────
                 - script: |
-                    echo "Checking container health status..."
-
-                    for container in $(sqlContainerName) $(apiContainerName); do
-                      echo "Waiting for $container to be healthy..."
-                      until [ "$(docker inspect --format '{{.State.Health.Status}}' $container)" = "healthy" ]; do
-                        echo "$container not healthy yet, retrying in 5s..."
-                        sleep 5
-                      done
-                      echo "$container is healthy!"
+                    echo "Checking API container health status..."
+                    until [ "$(docker inspect --format '{{.State.Health.Status}}' $(apiContainerName))" = "healthy" ]; do
+                      echo "$(apiContainerName) not healthy yet, retrying in 5s..."
+                      sleep 5
                     done
-
-                    echo "All containers are healthy!"
-                  displayName: 'Verify Container Health'
+                    echo "$(apiContainerName) is healthy!"
+                  displayName: 'Verify API Container Health'
