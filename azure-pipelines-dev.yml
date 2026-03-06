@@ -10,6 +10,7 @@ pr:
 
 variables:
   acrName: 'testregistryname-a7bdb0hecja0hvav.azurecr.io'
+  acrShortName: 'testregistryname'
   imageName: 'performance'
   imageTag: '$(Build.BuildId)'
   serviceConnection: 'testregistryname'
@@ -18,6 +19,7 @@ variables:
   apiContainerName: 'performance-webapi-dev'
   dockerNetwork: 'performance-network-dev'
   apiPort: '8080'
+  keepImages: '10'
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
   # acrUsername
@@ -129,3 +131,36 @@ stages:
                     done
                     echo "$(apiContainerName) is healthy!"
                   displayName: 'Verify API Container Health'
+
+                # ─── Cleanup Old Local Images ────────────────────────────────
+                - script: |
+                    echo "Removing dangling images..."
+                    docker image prune -f
+
+                    echo "Keeping only last $(keepImages) images, removing older ones..."
+                    docker images $(acrName)/$(imageName) --format "{{.Tag}}" | \
+                      grep -v latest | \
+                      sort -rn | \
+                      tail -n +$(($(keepImages) + 1)) | \
+                      xargs -I {} docker rmi $(acrName)/$(imageName):{} 2>/dev/null || true
+
+                    echo "Local cleanup complete!"
+                  displayName: 'Cleanup Old Local Images'
+
+                # ─── Cleanup Old ACR Images ──────────────────────────────────
+                - script: |
+                    echo "Cleaning up old images in ACR..."
+                    az acr repository show-tags \
+                      --name $(acrShortName) \
+                      --repository $(imageName) \
+                      --orderby time_asc \
+                      --output tsv | \
+                      grep -v latest | \
+                      head -n -$(keepImages) | \
+                      xargs -I {} az acr repository delete \
+                        --name $(acrShortName) \
+                        --image $(imageName):{} \
+                        --yes 2>/dev/null || true
+
+                    echo "ACR cleanup complete!"
+                  displayName: 'Cleanup Old ACR Images'
