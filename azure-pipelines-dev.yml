@@ -112,7 +112,7 @@ stages:
                       -e ASPNETCORE_ENVIRONMENT=$(appEnv) \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
                       -p $(apiPort):8080 \
-                      --health-cmd "curl -f http://localhost:8080/health || exit 1" \
+                      --health-cmd "wget -qO- http://localhost:8080/health || exit 1" \
                       --health-interval 15s \
                       --health-timeout 5s \
                       --health-retries 3 \
