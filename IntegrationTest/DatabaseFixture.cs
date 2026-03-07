@@ -1,3 +1,4 @@
+using DotNet.Testcontainers.Builders;
 using Microsoft.EntityFrameworkCore;
 using Performance.Domain.Entity;
 using Performance.Infrastructure;
@@ -8,7 +9,11 @@ namespace IntegrationTest
     public class DatabaseFixture : IAsyncLifetime
     {
         private readonly MsSqlContainer _container = new MsSqlBuilder("mcr.microsoft.com/azure-sql-edge:latest")
-            .Build();
+        .WithWaitStrategy(
+            Wait.ForUnixContainer()
+                .UntilInternalTcpPortIsAvailable(1433) // ✅ TCP check instead of sqlcmd
+        )
+        .Build();
 
         public UserDbContext DbContext { get; private set; } = null!;
 
