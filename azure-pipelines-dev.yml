@@ -20,6 +20,15 @@ variables:
   dockerNetwork: 'performance-network-dev'
   apiPort: '8080'
   keepImages: '10'
+  # ── Paths ──────────────────────────────────────────────────────────────────
+  rootPath: '$(Build.SourcesDirectory)'
+  appProjectPath: '$(Build.SourcesDirectory)/Performance'
+  appCsprojPath: '$(Build.SourcesDirectory)/Performance/Performance.csproj'
+  dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+  unitTestPath: '$(Build.SourcesDirectory)/UnitTest'
+  testResultsPath: '$(Agent.TempDirectory)/TestResults'
+  testResultsFile: '$(Agent.TempDirectory)/TestResults/test-results.trx'
+  coverageResultsFile: '$(Agent.TempDirectory)/TestResults/coverage.xml'
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
   # acrUsername
@@ -31,8 +40,55 @@ stages:
   - stage: Build
     displayName: 'Build & Push Docker Image'
     jobs:
+
+      # ─── Job 1: Run Unit Tests ─────────────────────────────────────────────
+      - job: RunTests
+        displayName: 'Run Unit Tests'
+        pool:
+          name: 'Default'
+          demands:
+            - Agent.Name -equals raspi4
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
+
+          - script: |
+              dotnet restore "$(unitTestPath)"
+            displayName: 'Restore Dependencies'
+
+          - script: |
+              dotnet test "$(unitTestPath)" \
+                --configuration Release \
+                --logger "trx;LogFileName=test-results.trx" \
+                --results-directory "$(testResultsPath)" \
+                /p:CollectCoverage=true \
+                /p:CoverletOutputFormat=cobertura \
+                /p:CoverletOutput="$(coverageResultsFile)"
+            displayName: 'Run Unit Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(testResultsFile)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Code Coverage'
+            condition: always()
+            inputs:
+              summaryFileLocation: '$(coverageResultsFile)'
+
+      # ─── Job 2: Build and Push Docker Image ────────────────────────────────
       - job: BuildImage
         displayName: 'Build Docker Image'
+        dependsOn: RunTests
+        condition: succeeded()
         pool:
           name: 'Default'
           demands:
@@ -45,8 +101,8 @@ stages:
               command: build
               containerRegistry: '$(serviceConnection)'
               repository: '$(imageName)'
-              dockerfile: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-              buildContext: '$(Build.SourcesDirectory)'
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(rootPath)'
               tags: |
                 $(imageTag)
                 latest
