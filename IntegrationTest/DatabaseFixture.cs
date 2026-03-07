@@ -7,7 +7,7 @@ namespace IntegrationTest
 {
     public class DatabaseFixture : IAsyncLifetime
     {
-        private readonly MsSqlContainer _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
+        private readonly MsSqlContainer _container = new MsSqlBuilder("mcr.microsoft.com/azure-sql-edge:latest")
             .Build();
 
         public UserDbContext DbContext { get; private set; } = null!;
