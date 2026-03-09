@@ -1,39 +1,277 @@
-# Docker
-# Build and push an image to Azure Container Registry
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
-- master
+  branches:
+    include:
+      - master
 
-resources:
-- repo: self
+pr:
+  branches:
+    include:
+      - master
+
+parameters:
+  - name: poolName
+    type: string
+    default: 'Default'
+  - name: agentName
+    type: string
+    default: 'raspi4'
 
 variables:
-  # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '4010eb2f-5432-4834-9bfa-d8caf42fe54a'
-  imageRepository: 'performance'
-  containerRegistry: 'testregistryname-a7bdb0hecja0hvav.azurecr.io'
+  acrShortName: 'testregistryname'
+  imageName: 'performance'
+  imageTag: '$(Build.BuildId)'
+  serviceConnection: 'testregistryname'
+  appEnv: 'Production'
+  env: 'prod'
+  apiContainerName: 'performance-webapi-prod'
+  dockerNetwork: 'performance-network-prod'
+  apiPort: '8081'
+  keepImages: '5'
+  # ── Paths ──────────────────────────────────────────────────────────────────
+  rootPath: '$(Build.SourcesDirectory)'
+  appProjectPath: '$(Build.SourcesDirectory)/Performance'
+  appCsprojPath: '$(Build.SourcesDirectory)/Performance/Performance.csproj'
   dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-  tag: '$(Build.BuildId)'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+  unitTestPath: '$(Build.SourcesDirectory)/UnitTest'
+  integrationTestPath: '$(Build.SourcesDirectory)/IntegrationTest'
+  testResultsPath: '$(Agent.TempDirectory)/TestResults'
+  unitTestResultsFile: '$(Agent.TempDirectory)/TestResults/unit-test-results.trx'
+  unitCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/unit-coverage.xml'
+  integrationTestResultsFile: '$(Agent.TempDirectory)/TestResults/integration-test-results.trx'
+  integrationCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/integration-coverage.xml'
+  # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
+  # DefaultConnection
+  # acrUsername
+  # acrPassword
 
 stages:
-- stage: Build
-  displayName: Build and push stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+
+  # ─── CI Stage: Runs on PR creation and new commits to PR ───────────────────
+  - stage: Build
+    displayName: 'Build & Push Docker Image'
+    jobs:
+
+      # ─── Job 1: Run Unit Tests ─────────────────────────────────────────────
+      - job: RunUnitTests
+        displayName: 'Run Unit Tests'
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
+
+          - script: |
+              dotnet restore "$(unitTestPath)"
+            displayName: 'Restore Unit Test Dependencies'
+
+          - script: |
+              dotnet test "$(unitTestPath)" \
+                --configuration Release \
+                --logger "trx;LogFileName=unit-test-results.trx" \
+                --results-directory "$(testResultsPath)" \
+                /p:CollectCoverage=true \
+                /p:CoverletOutputFormat=cobertura \
+                /p:CoverletOutput="$(unitCoverageResultsFile)"
+            displayName: 'Run Unit Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Unit Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(unitTestResultsFile)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Unit Test Coverage'
+            condition: always()
+            inputs:
+              summaryFileLocation: '$(unitCoverageResultsFile)'
+
+      # ─── Job 2: Run Integration Tests ──────────────────────────────────────
+      - job: RunIntegrationTests
+        displayName: 'Run Integration Tests'
+        dependsOn: RunUnitTests
+        condition: succeeded()
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
+
+          - script: |
+              dotnet restore "$(integrationTestPath)"
+            displayName: 'Restore Integration Test Dependencies'
+
+          - script: |
+              dotnet test "$(integrationTestPath)" \
+                --configuration Release \
+                --logger "trx;LogFileName=integration-test-results.trx" \
+                --results-directory "$(testResultsPath)" \
+                /p:CollectCoverage=true \
+                /p:CoverletOutputFormat=cobertura \
+                /p:CoverletOutput="$(integrationCoverageResultsFile)"
+            displayName: 'Run Integration Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Integration Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(integrationTestResultsFile)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Integration Test Coverage'
+            condition: always()
+            inputs:
+              summaryFileLocation: '$(integrationCoverageResultsFile)'
+
+      # ─── Job 3: Build and Push Docker Image ────────────────────────────────
+      - job: BuildImage
+        displayName: 'Build Docker Image'
+        dependsOn: RunIntegrationTests
+        condition: succeeded()
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: Docker@2
+            displayName: 'Build Docker Image'
+            inputs:
+              command: build
+              containerRegistry: '$(serviceConnection)'
+              repository: '$(imageName)'
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(rootPath)'
+              tags: |
+                $(imageTag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push to ACR'
+            condition: |
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest')
+              )
+            inputs:
+              command: push
+              containerRegistry: '$(serviceConnection)'
+              repository: '$(imageName)'
+              tags: |
+                $(imageTag)
+                latest
+
+  # ─── CD Stage: Runs only after merge to master or manual trigger ──────────
+  - stage: Deploy
+    displayName: 'Deploy to Raspberry Pi'
+    dependsOn: Build
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+        ne(variables['Build.Reason'], 'PullRequest')
+      )
+    jobs:
+      - deployment: DeployToPi
+        displayName: 'Pull & Run Container on Raspberry Pi'
+        environment: 'raspberry-pi'
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                # ─── Authenticate ───────────────────────────────────────────
+                - script: |
+                    docker login $(acrName) \
+                      --username $(acrUsername) \
+                      --password $(acrPassword)
+                  displayName: 'Authenticate Docker with ACR'
+
+                # ─── API ────────────────────────────────────────────────────
+                - script: |
+                    docker pull $(acrName)/$(imageName):latest
+                  displayName: 'Pull Latest Image from ACR'
+
+                - script: |
+                    docker stop $(apiContainerName) || true
+                    docker rm $(apiContainerName) || true
+                  displayName: 'Remove Old Container'
+
+                - script: |
+                    docker run -d \
+                      --name $(apiContainerName) \
+                      --network $(dockerNetwork) \
+                      --restart unless-stopped \
+                      -e ASPNETCORE_ENVIRONMENT=$(appEnv) \
+                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
+                      -p $(apiPort):8080 \
+                      --health-cmd "bash -c 'cat /dev/null > /dev/tcp/localhost/8080'" \
+                      --health-interval 15s \
+                      --health-timeout 5s \
+                      --health-retries 3 \
+                      --health-start-period 30s \
+                      $(acrName)/$(imageName):latest
+                  displayName: 'Run New Container'
+
+                # ─── Health Check Verification ───────────────────────────────
+                - script: |
+                    echo "Checking API container health status..."
+                    until [ "$(docker inspect --format '{{.State.Health.Status}}' $(apiContainerName))" = "healthy" ]; do
+                      echo "$(apiContainerName) not healthy yet, retrying in 5s..."
+                      sleep 5
+                    done
+                    echo "$(apiContainerName) is healthy!"
+                  displayName: 'Verify API Container Health'
+
+                # ─── Cleanup Old Local Images ────────────────────────────────
+                - script: |
+                    echo "Removing dangling images..."
+                    docker image prune -f
+
+                    echo "Keeping only last $(keepImages) images, removing older ones..."
+                    docker images $(acrName)/$(imageName) --format "{{.Tag}}" | \
+                      grep -v latest | \
+                      sort -rn | \
+                      tail -n +$(($(keepImages) + 1)) | \
+                      xargs -I {} docker rmi $(acrName)/$(imageName):{} 2>/dev/null || true
+
+                    echo "Local cleanup complete!"
+                  displayName: 'Cleanup Old Local Images'
+
+                # ─── Cleanup Old ACR Images ──────────────────────────────────
+                - script: |
+                    echo "Cleaning up old images in ACR..."
+                    az acr repository show-tags \
+                      --name $(acrShortName) \
+                      --repository $(imageName) \
+                      --orderby time_asc \
+                      --output tsv | \
+                      grep -v latest | \
+                      head -n -$(keepImages) | \
+                      xargs -I {} az acr repository delete \
+                        --name $(acrShortName) \
+                        --image $(imageName):{} \
+                        --yes 2>/dev/null || true
+
+                    echo "ACR cleanup complete!"
+                  displayName: 'Cleanup Old ACR Images'
