@@ -1,0 +1,45 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pr:
+  branches:
+    include:
+      - develop
+
+parameters:
+  - name: poolName
+    type: string
+    default: 'Default'
+
+  - name: agentName
+    type: string
+    default: 'raspi4'
+
+stages:
+
+  # ─── CI Stage ──────────────────────────────────────────────────────────────
+  - template: templates/build.yml
+    parameters:
+      poolName: ${{ parameters.poolName }}
+      agentName: ${{ parameters.agentName }}
+      imageName: 'performance'
+      serviceConnection: 'testregistryname'
+
+  # ─── CD Stage ──────────────────────────────────────────────────────────────
+  - template: templates/deploy.yml
+    parameters:
+      poolName: ${{ parameters.poolName }}
+      agentName: ${{ parameters.agentName }}
+      # ── Environment ──────────────────────────────────────────────────────
+      appEnv: 'Development'
+      targetBranch: 'refs/heads/develop'
+      # ── Container ────────────────────────────────────────────────────────
+      apiContainerName: 'performance-webapi-dev'
+      dockerNetwork: 'performance-network-dev'
+      apiPort: '8080'
+      # ── Registry ─────────────────────────────────────────────────────────
+      acrShortName: 'testregistryname'
+      imageName: 'performance'
+      keepImages: '10'

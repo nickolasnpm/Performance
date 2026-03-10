@@ -1,0 +1,158 @@
+parameters:
+  # ── Agent ──────────────────────────────────────────────────────────────────
+  - name: poolName
+    type: string
+
+  - name: agentName
+    type: string
+
+  # ── Registry ───────────────────────────────────────────────────────────────
+  - name: imageName
+    type: string
+
+  - name: serviceConnection
+    type: string
+
+stages:
+
+  # ─── CI Stage ──────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build & Push Docker Image'
+    variables:
+      imageTag: '$(Build.BuildId)'
+      rootPath: '$(Build.SourcesDirectory)'
+      dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+      unitTestPath: '$(Build.SourcesDirectory)/UnitTest'
+      integrationTestPath: '$(Build.SourcesDirectory)/IntegrationTest'
+      testResultsPath: '$(Agent.TempDirectory)/TestResults'
+      unitTestResultsFile: '$(Agent.TempDirectory)/TestResults/unit-test-results.trx'
+      unitCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/unit-coverage.xml'
+      integrationTestResultsFile: '$(Agent.TempDirectory)/TestResults/integration-test-results.trx'
+      integrationCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/integration-coverage.xml'
+    jobs:
+
+      # ─── Job 1: Run Unit Tests ──────────────────────────────────────────────
+      - job: RunUnitTests
+        displayName: 'Run Unit Tests'
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
+
+          - script: |
+              dotnet restore "$(unitTestPath)"
+            displayName: 'Restore Unit Test Dependencies'
+
+          - script: |
+              dotnet test "$(unitTestPath)" \
+                --configuration Release \
+                --logger "trx;LogFileName=unit-test-results.trx" \
+                --results-directory "$(testResultsPath)" \
+                /p:CollectCoverage=true \
+                /p:CoverletOutputFormat=cobertura \
+                /p:CoverletOutput="$(unitCoverageResultsFile)"
+            displayName: 'Run Unit Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Unit Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(unitTestResultsFile)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Unit Test Coverage'
+            condition: always()
+            inputs:
+              summaryFileLocation: '$(unitCoverageResultsFile)'
+
+      # ─── Job 2: Run Integration Tests ──────────────────────────────────────
+      - job: RunIntegrationTests
+        displayName: 'Run Integration Tests'
+        dependsOn: RunUnitTests
+        condition: succeeded()
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
+
+          - script: |
+              dotnet restore "$(integrationTestPath)"
+            displayName: 'Restore Integration Test Dependencies'
+
+          - script: |
+              dotnet test "$(integrationTestPath)" \
+                --configuration Release \
+                --logger "trx;LogFileName=integration-test-results.trx" \
+                --results-directory "$(testResultsPath)" \
+                /p:CollectCoverage=true \
+                /p:CoverletOutputFormat=cobertura \
+                /p:CoverletOutput="$(integrationCoverageResultsFile)"
+            displayName: 'Run Integration Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Integration Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(integrationTestResultsFile)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Integration Test Coverage'
+            condition: always()
+            inputs:
+              summaryFileLocation: '$(integrationCoverageResultsFile)'
+
+      # ─── Job 3: Build and Push Docker Image ────────────────────────────────
+      - job: BuildImage
+        displayName: 'Build Docker Image'
+        dependsOn: RunIntegrationTests
+        condition: succeeded()
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: Docker@2
+            displayName: 'Build Docker Image'
+            inputs:
+              command: build
+              containerRegistry: ${{ parameters.serviceConnection }}
+              repository: ${{ parameters.imageName }}
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(rootPath)'
+              tags: |
+                $(imageTag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push to ACR'
+            condition: |
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest')
+              )
+            inputs:
+              command: push
+              containerRegistry: ${{ parameters.serviceConnection }}
+              repository: ${{ parameters.imageName }}
+              tags: |
+                $(imageTag)
+                latest

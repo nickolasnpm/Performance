@@ -1,0 +1,143 @@
+parameters:
+  # ── Agent ──────────────────────────────────────────────────────────────────
+  - name: poolName
+    type: string
+
+  - name: agentName
+    type: string
+
+  # ── Environment ────────────────────────────────────────────────────────────
+  - name: appEnv
+    type: string
+
+  - name: targetBranch
+    type: string
+
+  # ── Container ──────────────────────────────────────────────────────────────
+  - name: apiContainerName
+    type: string
+
+  - name: dockerNetwork
+    type: string
+
+  - name: apiPort
+    type: string
+
+  # ── Registry ───────────────────────────────────────────────────────────────
+  - name: acrShortName
+    type: string
+
+  - name: imageName
+    type: string
+
+  - name: keepImages
+    type: string
+
+  # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
+  # DefaultConnection
+  # acrName
+  # acrUsername
+  # acrPassword
+
+stages:
+
+  # ─── CD Stage ──────────────────────────────────────────────────────────────
+  - stage: Deploy
+    displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
+    dependsOn: Build
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], '${{ parameters.targetBranch }}'),
+        ne(variables['Build.Reason'], 'PullRequest')
+      )
+    jobs:
+      - deployment: DeployToPi
+        displayName: 'Pull & Run Container on Raspberry Pi'
+        environment: 'raspberry-pi'
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                # ─── Authenticate ─────────────────────────────────────────────
+                - script: |
+                    docker login $(acrName) \
+                      --username $(acrUsername) \
+                      --password $(acrPassword)
+                  displayName: 'Authenticate Docker with ACR'
+
+                # ─── Pull Latest Image ────────────────────────────────────────
+                - script: |
+                    docker pull $(acrName)/${{ parameters.imageName }}:latest
+                  displayName: 'Pull Latest Image from ACR'
+
+                # ─── Replace Old Container ────────────────────────────────────
+                - script: |
+                    docker stop ${{ parameters.apiContainerName }} || true
+                    docker rm   ${{ parameters.apiContainerName }} || true
+                  displayName: 'Remove Old Container'
+
+                # ─── Run New Container ────────────────────────────────────────
+                - script: |
+                    docker run -d \
+                      --name ${{ parameters.apiContainerName }} \
+                      --network ${{ parameters.dockerNetwork }} \
+                      --restart unless-stopped \
+                      -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
+                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
+                      -p ${{ parameters.apiPort }}:8080 \
+                      --health-cmd "bash -c 'cat /dev/null > /dev/tcp/localhost/8080'" \
+                      --health-interval 15s \
+                      --health-timeout 5s \
+                      --health-retries 3 \
+                      --health-start-period 30s \
+                      $(acrName)/${{ parameters.imageName }}:latest
+                  displayName: 'Run New Container'
+
+                # ─── Health Check Verification ────────────────────────────────
+                - script: |
+                    echo "Checking ${{ parameters.apiContainerName }} health status..."
+                    until [ "$(docker inspect --format '{{.State.Health.Status}}' ${{ parameters.apiContainerName }})" = "healthy" ]; do
+                      echo "${{ parameters.apiContainerName }} not healthy yet, retrying in 5s..."
+                      sleep 5
+                    done
+                    echo "${{ parameters.apiContainerName }} is healthy!"
+                  displayName: 'Verify Container Health'
+
+                # ─── Cleanup Old Local Images ─────────────────────────────────
+                - script: |
+                    echo "Removing dangling images..."
+                    docker image prune -f
+
+                    echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
+                    docker images $(acrName)/${{ parameters.imageName }} --format "{{.Tag}}" | \
+                      grep -v latest | \
+                      sort -rn | \
+                      tail -n +$((${{ parameters.keepImages }} + 1)) | \
+                      xargs -I {} docker rmi $(acrName)/${{ parameters.imageName }}:{} 2>/dev/null || true
+
+                    echo "Local cleanup complete!"
+                  displayName: 'Cleanup Old Local Images'
+
+                # ─── Cleanup Old ACR Images ───────────────────────────────────
+                - script: |
+                    echo "Cleaning up old images in ACR..."
+                    az acr repository show-tags \
+                      --name ${{ parameters.acrShortName }} \
+                      --repository ${{ parameters.imageName }} \
+                      --orderby time_asc \
+                      --output tsv | \
+                      grep -v latest | \
+                      head -n -${{ parameters.keepImages }} | \
+                      xargs -I {} az acr repository delete \
+                        --name ${{ parameters.acrShortName }} \
+                        --image ${{ parameters.imageName }}:{} \
+                        --yes 2>/dev/null || true
+
+                    echo "ACR cleanup complete!"
+                  displayName: 'Cleanup Old ACR Images'
