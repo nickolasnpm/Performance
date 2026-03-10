@@ -33,7 +33,6 @@ stages:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
       appEnv: 'Production'
-      targetBranch: 'refs/heads/master'
       apiContainerName: 'performance-webapi-prod'
       dockerNetwork: 'performance-network-prod'
       imageName: 'performance'
