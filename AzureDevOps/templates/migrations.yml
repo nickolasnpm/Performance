@@ -1,0 +1,86 @@
+parameters:
+  # ── Agent ──────────────────────────────────────────────────────────────────
+  - name: poolName
+    type: string
+
+  - name: agentName
+    type: string
+
+  # ── Environment ────────────────────────────────────────────────────────────
+  - name: appEnv
+    type: string
+
+  # ── Container ──────────────────────────────────────────────────────────────
+  - name: apiContainerName
+    type: string
+
+  - name: dockerNetwork
+    type: string
+
+  # ── Registry ───────────────────────────────────────────────────────────────
+  - name: imageName
+    type: string
+
+  # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
+  # DefaultConnection
+  # acrName
+
+stages:
+
+  # ─── Migration Stage ───────────────────────────────────────────────────────
+  - stage: Migrate
+    displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
+    condition: eq('${{ parameters.appEnv }}', 'Production')
+    variables:
+      dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+    jobs:
+      - deployment: RunMigrations
+        displayName: 'Run EF Core Migrations on Raspberry Pi'
+        environment: 'raspberry-pi'
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                # ─── Build Migration Image ────────────────────────────────────
+                - script: |
+                    echo "Building migration image from SDK stage..."
+                    docker build \
+                      --platform linux/arm64 \
+                      --target migrate \
+                      -t $(acrName)/${{ parameters.imageName }}:migrate \
+                      -f $(dockerfilePath) \
+                      $(Build.SourcesDirectory)
+                  displayName: 'Build Migration Image'
+
+                # ─── Run EF Core Migrations ───────────────────────────────────
+                - script: |
+                    echo "Running EF Core migrations..."
+
+                    docker run --rm \
+                      --name ${{ parameters.apiContainerName }}-migration \
+                      --network ${{ parameters.dockerNetwork }} \
+                      -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
+                      -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
+                      $(acrName)/${{ parameters.imageName }}:migrate
+
+                    MIGRATION_EXIT=$?
+                    if [ $MIGRATION_EXIT -ne 0 ]; then
+                      echo "##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment."
+                      exit $MIGRATION_EXIT
+                    fi
+
+                    echo "EF Core migrations applied successfully!"
+                  displayName: 'Run EF Core Migrations'
+
+                # ─── Cleanup Migration Image ──────────────────────────────────
+                - script: |
+                    echo "Removing local migration image..."
+                    docker rmi $(acrName)/${{ parameters.imageName }}:migrate 2>/dev/null || true
+                    echo "Migration image removed!"
+                  displayName: 'Cleanup Migration Image'
+                  condition: always()

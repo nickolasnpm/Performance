@@ -44,7 +44,11 @@ stages:
   # ─── CD Stage ──────────────────────────────────────────────────────────────
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
-    dependsOn: Build
+    dependsOn:
+      - ${{ if eq(parameters.appEnv, 'Production') }}:
+        - Migrate
+      - ${{ else }}:
+        - Build
     condition: |
       and(
         succeeded(),

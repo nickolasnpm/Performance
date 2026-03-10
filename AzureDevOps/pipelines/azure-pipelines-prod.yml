@@ -27,19 +27,27 @@ stages:
       imageName: 'performance'
       serviceConnection: 'testregistryname'
 
+  # ─── Migrations Stage ──────────────────────────────────────────────────────
+  - template: pipelines/migrations.yml
+    parameters:
+      poolName: ${{ parameters.poolName }}
+      agentName: ${{ parameters.agentName }}
+      appEnv: 'Production'
+      targetBranch: 'refs/heads/master'
+      apiContainerName: 'performance-webapi-prod'
+      dockerNetwork: 'performance-network-prod'
+      imageName: 'performance'
+
   # ─── CD Stage ──────────────────────────────────────────────────────────────
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      # ── Environment ──────────────────────────────────────────────────────
       appEnv: 'Production'
       targetBranch: 'refs/heads/master'
-      # ── Container ────────────────────────────────────────────────────────
       apiContainerName: 'performance-webapi-prod'
       dockerNetwork: 'performance-network-prod'
       apiPort: '8081'
-      # ── Registry ─────────────────────────────────────────────────────────
       acrShortName: 'testregistryname'
       imageName: 'performance'
       keepImages: '5'
