@@ -67,6 +67,7 @@ stages:
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
                       $(acrName)/${{ parameters.imageName }}:migrate
+                      dotnet-ef database update --verbose
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then

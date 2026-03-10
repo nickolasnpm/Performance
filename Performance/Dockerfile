@@ -28,7 +28,7 @@ COPY . .
 WORKDIR "/src/Performance"
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
-ENTRYPOINT ["dotnet-ef", "database", "update"]
+ENTRYPOINT ["dotnet-ef", "database", "update", "--project", "Performance.csproj"]
 
 # Final stage
 FROM base AS final
