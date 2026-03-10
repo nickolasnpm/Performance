@@ -28,7 +28,7 @@ stages:
       serviceConnection: 'testregistryname'
 
   # ─── Migrations Stage ──────────────────────────────────────────────────────
-  - template: pipelines/migrations.yml
+  - template: ../templates/migrations.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
