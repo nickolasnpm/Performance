@@ -30,7 +30,12 @@ stages:
   # ─── Migration Stage ───────────────────────────────────────────────────────
   - stage: Migrate
     displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
-    condition: eq('${{ parameters.appEnv }}', 'Production')
+    # ✅ Only run on Production AND only after merge (not on PR)
+    condition: |
+      and(
+        eq('${{ parameters.appEnv }}', 'Production'),
+        ne(variables['Build.Reason'], 'PullRequest')
+      )
     variables:
       dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
     jobs:
@@ -66,7 +71,7 @@ stages:
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      $(acrName)/${{ parameters.imageName }}:migrate
+                      $(acrName)/${{ parameters.imageName }}:migrate \
                       dotnet-ef database update --verbose
 
                     MIGRATION_EXIT=$?
