@@ -7,7 +7,7 @@ using Performance.Infrastructure.Repositories;
 
 namespace Performance.Infrastructure.UnitOfWork
 {
-    public class UnitOfWork(UserDbContext _context, IOptions<AppSettings> _appSettings, IOptions<CacheSettings> _cacheSettings)
+    public class UnitOfWork(UserDbContext context, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUnitOfWork
     {
         private IDbContextTransaction? _transaction;
@@ -17,7 +17,7 @@ namespace Performance.Infrastructure.UnitOfWork
         #region repositories
         IUserRepositories IUnitOfWork.UserRepository
         {
-            get { return _userRepository ??= new UserRepositories(_context, _appSettings, _cacheSettings); }
+            get { return _userRepository ??= new UserRepositories(context, appSettings, cacheSettings); }
         }
         #endregion
 
@@ -27,7 +27,7 @@ namespace Performance.Infrastructure.UnitOfWork
             if (_transaction is not null)
                 throw new InvalidOperationException("A transaction is already in progress.");
 
-            _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            _transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         }
 
         public async Task CommitAsync(CancellationToken cancellationToken = default)
@@ -37,7 +37,7 @@ namespace Performance.Infrastructure.UnitOfWork
 
             try
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
                 await _transaction.CommitAsync(cancellationToken);
             }
             catch
@@ -68,7 +68,7 @@ namespace Performance.Infrastructure.UnitOfWork
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            return await context.SaveChangesAsync(cancellationToken);
         }
 
         private async Task DisposeTransactionAsync()
@@ -83,7 +83,7 @@ namespace Performance.Infrastructure.UnitOfWork
         public void Dispose()
         {
             _transaction?.Dispose();
-            _context.Dispose();
+            context.Dispose();
         }
         #endregion
     }

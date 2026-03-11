@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common;
 using Performance.Application.DTO;
 using Performance.Application.Interface.Services;
@@ -9,12 +8,12 @@ using Performance.Domain.Entity;
 
 namespace Performance.Domain.Services
 {
-    public class UserServices (IUnitOfWork _unitOfWork)
+    public class UserServices (IUnitOfWork unitOfWork)
         : IUserServices
     {
         public IQueryable<User> GetAllAsync()
         {
-            return _unitOfWork.UserRepository.GetAll();
+            return unitOfWork.UserRepository.GetAll();
         }
 
         public async Task<UserResponseDTO<User>> GetPaginatedListAsync(UserRequestDTO request)
@@ -43,7 +42,7 @@ namespace Performance.Domain.Services
                 throw new Exception("Page number must be greater than 0.");
             }
 
-            var (users, totalCount) = await _unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
+            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
             //var (users, totalCount) = await _offsetRepository.GetPaginatedUsersByCursor(request, new UserIncludeOptions() { Address = true });
 
             int totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
@@ -68,7 +67,7 @@ namespace Performance.Domain.Services
                 throw new Exception("Cursor must be a non-negative value.");
             }
 
-            var (users, totalCount) = await _unitOfWork.UserRepository.GetPaginatedUsersByCursor(request, UserIncludeOptions.All);
+            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(request, UserIncludeOptions.All);
             var result = await users.ToListAsync();
 
             bool hasMore = result.Count > request.PageSize;

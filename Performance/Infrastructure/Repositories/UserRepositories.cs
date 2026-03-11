@@ -10,12 +10,12 @@ using Performance.Infrastructure.Caching;
 
 namespace Performance.Infrastructure.Repositories
 {
-    public class UserRepositories (UserDbContext _userDbContext, IOptions<AppSettings> _appSettings, IOptions<CacheSettings> _cacheSettings)
+    public class UserRepositories (UserDbContext userDbContext, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUserRepositories
     {
         public IQueryable<User> GetAll()
         {
-            return _userDbContext.Users.AsNoTracking();
+            return userDbContext.Users.AsNoTracking();
         }
 
         public async Task<(IQueryable<User> Items, int TotalCount)> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
@@ -24,9 +24,9 @@ namespace Performance.Infrastructure.Repositories
 
             var totalCount = 0;
 
-            if (_appSettings.Value.IsUseCache)
+            if (appSettings.Value.IsUseCache)
             {
-                var userCountCacheSettings = _cacheSettings.Value.Items[CacheKeys.UserCount];
+                var userCountCacheSettings = cacheSettings.Value.Items[CacheKeys.UserCount];
 
                 totalCount = await AsyncCache<int>.GetOrUpdateAsync(userCountCacheSettings.Key,
                     TimeSpan.FromMinutes(userCountCacheSettings.ExpirationMinutes), () => queryable.CountAsync());
@@ -52,9 +52,9 @@ namespace Performance.Infrastructure.Repositories
 
             int totalCount = 0;
 
-            if (_appSettings.Value.IsUseCache)
+            if (appSettings.Value.IsUseCache)
             {
-                var userCountCacheSettings = _cacheSettings.Value.Items[CacheKeys.UserCount];
+                var userCountCacheSettings = cacheSettings.Value.Items[CacheKeys.UserCount];
 
                 totalCount = await AsyncCache<int>.GetOrUpdateAsync(userCountCacheSettings.Key,
                     TimeSpan.FromMinutes(userCountCacheSettings.ExpirationMinutes), () => queryable.CountAsync());
