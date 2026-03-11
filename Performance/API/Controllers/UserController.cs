@@ -12,6 +12,7 @@ namespace Performance.API.Controllers
         [HttpGet("getusers")]
         public async Task<IActionResult> GetPaginatedUsers ([FromQuery] UserRequestDTO request)
         {
+            // test test
             try
             {
                 if (!ModelState.IsValid)
