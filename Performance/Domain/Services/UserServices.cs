@@ -20,28 +20,25 @@ namespace Performance.Domain.Services
         {
             switch (request.PaginationType)
             {
-                case PaginationType.Cursor:
-                    if (request.CursorPagination is null)
-                        throw new Exception("Cursor pagination request is required.");
-                    return await CursorPaginationAsync(request.CursorPagination);
-
                 case PaginationType.Offset:
                     if (request.OffsetPagination is null)
-                        throw new Exception("Offset pagination request is required.");
+                       throw new ArgumentException("Offset pagination request is required.");
+
                     return await OffsetPaginationAsync(request.OffsetPagination);
 
+                case PaginationType.Cursor:
+                    if (request.CursorPagination is null)
+                       throw new ArgumentException("Cursor pagination request is required.");
+
+                    return await CursorPaginationAsync(request.CursorPagination);
+
                 default:
-                    throw new Exception("Invalid pagination type.");
+                    throw new ArgumentException("Invalid pagination type.");
             }
         }
 
         private async Task<OffsetPaginationResponse<User>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
-            if (request.Page < 1)
-            {
-                throw new Exception("Page number must be greater than 0.");
-            }
-
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
             //var (users, totalCount) = await _offsetRepository.GetPaginatedUsersByCursor(request, new UserIncludeOptions() { Address = true });
 
@@ -62,11 +59,6 @@ namespace Performance.Domain.Services
 
         private async Task<CursorPaginationResponse<User>> CursorPaginationAsync(CursorPaginationRequest request)
         {
-            if (request.Cursor < 0)
-            {
-                throw new Exception("Cursor must be a non-negative value.");
-            }
-
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(request, UserIncludeOptions.All);
             var result = await users.ToListAsync();
 

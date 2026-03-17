@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
+using Performance.API.Exceptions;
 using Performance.Application.Configuration;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
@@ -8,9 +10,9 @@ using Performance.Application.Interface.UnitOfWork;
 using Performance.Domain.Entity;
 using Performance.Domain.Services;
 using Performance.Infrastructure;
+using Performance.Infrastructure.Extensions;
 using Performance.Infrastructure.Repositories;
 using Performance.Infrastructure.UnitOfWork;
-using Performance.Infrastructure.Extensions;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,8 +24,7 @@ var modelBuilder = new ODataConventionModelBuilder();
 modelBuilder.EntitySet<User>("UsersOData");
 var edmModel = modelBuilder.GetEdmModel();
 
-builder.Services.AddControllers()
-    .AddOData(options => options
+builder.Services.AddControllers().AddOData(options => options
         .Select()
         .Filter()
         .OrderBy()
@@ -35,6 +36,14 @@ builder.Services.AddControllers()
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
+builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+        ValidationResponseFactory.Create(context, loggerFactory.CreateLogger<Program>());
+});
 
 builder.Services.AddDbContextPool<UserDbContext>(options =>
     options.UseSqlServer(
@@ -64,16 +73,19 @@ builder.Services.AddScoped<IUserRepositories, UserRepositories>();
 
 var app = builder.Build();
 
-if (!app.Environment.IsProduction())
-{
-    await app.ApplyMigrations();
-}
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+}
+
+if (!app.Environment.IsProduction())
+{
+    await app.ApplyMigrations();
 }
 
 app.UseHttpsRedirection();
