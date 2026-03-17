@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using Performance.API.Controllers;
 using Performance.Application;
 using Performance.Application.Common;
+using Performance.Application.Common.Enums;
 using Performance.Application.DTOs;
+using Performance.Application.DTOs.Users;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
@@ -146,9 +148,9 @@ namespace BenchmarkSuite
 
         #region Helper Methods
 
-        private async Task<IActionResult> ExecuteSingleRequest(UserRequestDTO request)
+        private async Task<ActionResult<UserResponseDTO<UserDTO>>> ExecuteSingleRequest(UserRequestDTO request)
         {
-            var controller = new UserController(_userServices, _logger);
+            var controller = new UserController(_userServices);
             return await controller.GetPaginatedUsers(request);
         }
 
@@ -170,7 +172,7 @@ namespace BenchmarkSuite
                         using var scope = _serviceProvider.CreateScope();
                         var userService = scope.ServiceProvider.GetRequiredService<IUserServices>();
                         var logger = scope.ServiceProvider.GetRequiredService<ILogger<UserController>>();
-                        var controller = new UserController(userService, logger);
+                        var controller = new UserController(userService);
 
                         var request = requestFactory(userIndex);
                         var result = await controller.GetPaginatedUsers(request);
@@ -256,7 +258,7 @@ namespace BenchmarkSuite
         #region Offset Pagination Benchmarks
 
         [Benchmark(Description = "Offset: First Page")]
-        public async Task<IActionResult> Offset_RetrieveFirstPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Offset_RetrieveFirstPage()
         {
             var request = new UserRequestDTO
             {
@@ -271,7 +273,7 @@ namespace BenchmarkSuite
         }
 
         [Benchmark(Description = "Offset: Middle Page")]
-        public async Task<IActionResult> Offset_RetrieveRandomPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Offset_RetrieveRandomPage()
         {
             var request = new UserRequestDTO
             {
@@ -286,7 +288,7 @@ namespace BenchmarkSuite
         }
 
         [Benchmark(Description = "Offset: Last Page")]
-        public async Task<IActionResult> Offset_RetrieveLastPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Offset_RetrieveLastPage()
         {
             var request = new UserRequestDTO
             {
@@ -305,7 +307,7 @@ namespace BenchmarkSuite
         #region Cursor Pagination Benchmarks
 
         [Benchmark(Description = "Cursor: First Page")]
-        public async Task<IActionResult> Cursor_RetrieveFirstPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Cursor_RetrieveFirstPage()
         {
             var request = new UserRequestDTO
             {
@@ -320,7 +322,7 @@ namespace BenchmarkSuite
         }
 
         [Benchmark(Description = "Cursor: Middle Page")]
-        public async Task<IActionResult> Cursor_RetrieveRandomPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Cursor_RetrieveRandomPage()
         {
             var request = new UserRequestDTO
             {
@@ -335,7 +337,7 @@ namespace BenchmarkSuite
         }
 
         [Benchmark(Description = "Cursor: Last Page")]
-        public async Task<IActionResult> Cursor_RetrieveLastPage()
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> Cursor_RetrieveLastPage()
         {
             var request = new UserRequestDTO
             {
