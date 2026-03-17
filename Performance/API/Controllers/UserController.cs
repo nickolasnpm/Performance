@@ -2,7 +2,6 @@
 using Performance.API.Exceptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.DTOs.Users;
-using Performance.Domain.Entity;
 
 namespace Performance.API.Controllers
 {
@@ -12,10 +11,10 @@ namespace Performance.API.Controllers
         : ControllerBase
     {
         [HttpGet("getusers")]
-        [ProducesResponseType(typeof(UserResponseDTO<User>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserResponseDTO<UserDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AppProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(AppProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserResponseDTO<User>>> GetPaginatedUsers([FromQuery] UserRequestDTO request)
+        public async Task<ActionResult<UserResponseDTO<UserDTO>>> GetPaginatedUsers([FromQuery] UserRequestDTO request)
         {
             return Ok(await userServices.GetPaginatedListAsync(request));
         }

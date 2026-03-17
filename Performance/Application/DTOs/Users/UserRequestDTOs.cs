@@ -5,6 +5,7 @@ namespace Performance.Application.DTOs.Users
 {
     public class UserRequestDTO
     {
+        [EnumDataType(typeof(PaginationType))]
         public PaginationType PaginationType { get; set; }
         public OffsetPaginationRequest? OffsetPagination { get; set; }
         public CursorPaginationRequest? CursorPagination { get; set; }

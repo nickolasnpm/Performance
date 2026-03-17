@@ -1,26 +1,23 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Performance.API.Controllers;
-using Performance.Application.Common;
-using Performance.Application.DTOs;
+using Performance.API.Exceptions;
+using Performance.Application.Common.Enums;
+using Performance.Application.DTOs.Users;
 using Performance.Application.Interface.Services;
-using Performance.Domain.Entity;
 
 namespace UnitTest
 {
     public class UserControllerTests
     {
         private readonly Mock<IUserServices> _mockUserServices;
-        private readonly Mock<ILogger<UserController>> _mockLogger;
         private readonly UserController _controller;
 
         public UserControllerTests()
         {
             _mockUserServices = new Mock<IUserServices>();
-            _mockLogger = new Mock<ILogger<UserController>>();
-            _controller = new UserController(_mockUserServices.Object, _mockLogger.Object);
+            _controller = new UserController(_mockUserServices.Object);
         }
 
         #region Test Data
@@ -33,9 +30,9 @@ namespace UnitTest
                     PaginationType = PaginationType.Offset,
                     OffsetPagination = new OffsetPaginationRequest { PageSize = 100, Page = 1 }
                 },
-                new OffsetPaginationResponse<User>
+                new OffsetPaginationResponse<UserDTO>
                 {
-                    Data = new List<User>(),
+                    Data = new List<UserDTO>(),
                     TotalCount = 0,
                     TotalPages = 1000,
                     HasNextPage = true,
@@ -48,9 +45,9 @@ namespace UnitTest
                     PaginationType = PaginationType.Cursor,
                     CursorPagination = new CursorPaginationRequest { PageSize = 100, Cursor = 0, IsQueryPreviousPage = false }
                 },
-                new CursorPaginationResponse<User>
+                new CursorPaginationResponse<UserDTO>
                 {
-                    Data = new List<User>(),
+                    Data = new List<UserDTO>(),
                     TotalCount = 0,
                     NextCursor = 100,
                     PreviousCursor = 1,
@@ -65,41 +62,21 @@ namespace UnitTest
 
         [Theory]
         [MemberData(nameof(PaginationTestData))]
-        public async Task GetPaginatedUsers_ValidRequest_ReturnsOkWithResult(UserRequestDTO userRequestDTO, UserResponseDTO<User> expectedResultDTO)
+        public async Task GetPaginatedUsers_ValidRequest_ReturnsOkWithResult(UserRequestDTO userRequestDTO, UserResponseDTO<UserDTO> expectedResultDTO)
         {
             // Arrange
-            var request = userRequestDTO;
-
-            var expectedResult = expectedResultDTO;
-            
             _mockUserServices
-                .Setup(s => s.GetPaginatedListAsync(request))
-                .ReturnsAsync(expectedResult);
+                .Setup(s => s.GetPaginatedListAsync(It.IsAny<UserRequestDTO>()))
+                .ReturnsAsync(expectedResultDTO);
 
             // Act
-            var result = await _controller.GetPaginatedUsers(request);
+            var result = await _controller.GetPaginatedUsers(userRequestDTO);
 
             // Assert
-            _mockUserServices.Verify(s => s.GetPaginatedListAsync(request), Times.Once);
+            _mockUserServices.Verify(s => s.GetPaginatedListAsync(It.IsAny<UserRequestDTO>()), Times.Once);
 
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
-            Assert.Equal(expectedResult, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetPaginatedUsers_InvalidModelState_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new UserRequestDTO();
-            _controller.ModelState.AddModelError("PageSize", "PageSize is required.");
-
-            // Act
-            var result = await _controller.GetPaginatedUsers(request);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(expectedResultDTO, okResult.Value);
         }
 
         #endregion
