@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Performance.Application.Common.Models;
 using Performance.Application.Configuration;
 using Performance.Application.DTO;
 using Performance.Application.Extensions.Repository;
@@ -18,7 +19,7 @@ namespace Performance.Infrastructure.Repositories
             return userDbContext.Users.AsNoTracking();
         }
 
-        public async Task<(IQueryable<User> Items, int TotalCount)> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
+        public async Task<UserPaginatedResult<User>> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
         {
             IQueryable<User> queryable = GetAll();
 
@@ -43,10 +44,12 @@ namespace Performance.Infrastructure.Repositories
 
             queryable = queryable.ApplyIncludes(includeOptions);
 
-            return (queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.PageSize).Take(request.PageSize), totalCount);
+            return new UserPaginatedResult<User>(
+                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.PageSize).Take(request.PageSize), 
+                TotalCount: totalCount);
         }
 
-        public async Task<(IQueryable<User> Items, int TotalCount)> GetPaginatedUsersByCursor(CursorPaginationRequest request, UserIncludeOptions includeOptions)
+        public async Task<UserPaginatedResult<User>> GetPaginatedUsersByCursor(CursorPaginationRequest request, UserIncludeOptions includeOptions)
         {
             IQueryable<User> queryable = GetAll();
 
@@ -80,8 +83,9 @@ namespace Performance.Infrastructure.Repositories
 
             queryable = queryable.ApplyIncludes(includeOptions);
 
-            return (queryable.Take(request.PageSize + 1), totalCount);
+            return new UserPaginatedResult<User>(
+                Items: queryable.Take(request.PageSize + 1), 
+                TotalCount: totalCount);
         }
-
     }
 }
