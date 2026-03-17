@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Performance.Application.DTO;
 using Performance.Application.Interface.Services;
+using Performance.Domain.Entity;
 
 namespace Performance.API.Controllers
 {
@@ -10,7 +11,7 @@ namespace Performance.API.Controllers
         : ControllerBase
     {
         [HttpGet("getusers")]
-        public async Task<IActionResult> GetPaginatedUsers([FromQuery] UserRequestDTO request)
+        public async Task<ActionResult<UserResponseDTO<User>>> GetPaginatedUsers([FromQuery] UserRequestDTO request)
         {
             return Ok(await userServices.GetPaginatedListAsync(request));
         }
