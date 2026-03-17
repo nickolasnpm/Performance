@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Performance.Application.Configuration;
-using Performance.Application.DTOs;
-using Performance.Application.Queries;
+using Performance.Application.Common.Settings;
+using Performance.Application.DTOs.Users;
+using Performance.Application.Extensions.Repository;
 using Performance.Infrastructure.Repositories;
 
 namespace IntegrationTest;
