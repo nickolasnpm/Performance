@@ -9,7 +9,6 @@ A .NET-based web API to test the performance optimization strategy. Among the st
 
 This project is follows a monolith architecture for development speed and simplicity whereby the folder is arranged accordingly with the class libraries in Clean Architecture.
 
-
 ## Design Patterns
 
 - **Dependency Injection**: Used throughout the application for loose coupling and testability.
@@ -26,7 +25,7 @@ This project is follows a monolith architecture for development speed and simpli
 - **Querying**: OData for flexible API queries
 - **Containerization**: Docker
 - **CI/CD**: Azure DevOps Pipelines (with separate dev and prod pipelines)
-- **Testing**: 
+- **Testing**:
   - Unit Tests (xUnit)
   - Integration Tests (with database fixtures)
   - Performance Benchmarks (BenchmarkDotNet)
@@ -38,35 +37,28 @@ This project is follows a monolith architecture for development speed and simpli
    - .NET 10 SDK
    - SQL Server (or compatible database)
    - Docker (for containerized deployment)
-<br>
 
 2. **Clone the Repository**:
-   ```
-   git clone <repository-url>
-   cd Performance
-   ```
+
+   - `git clone <repository-url>`
 
 3. **Restore Dependencies**:
-   ```
-   dotnet restore
-   ```
+
+   - `dotnet restore`
 
 4. **Run Database Migrations**:
-   ```
-   cd Performance
-   dotnet ef database update
-   ```
+
+   - `dotnet ef database update`
 
 5. **Run the Application**:
-   ```
-   dotnet run --project Performance
-   ```
+
+   - `dotnet run --project Performance`
 
 6. **Run Tests**:
    - Unit Tests: `dotnet test UnitTest`
    - Integration Tests: `dotnet test IntegrationTest`
    - Benchmarks: `dotnet run --project BenchmarkSuite`
-<br>
+
 7. **Build and Deploy**:
    - Use Azure DevOps pipelines for automated builds and deployments.
    - For local Docker build: `docker build -t performance .`
@@ -80,9 +72,9 @@ This project is follows a monolith architecture for development speed and simpli
 
 Refer to `Performance.http` for sample requests.
 
-## Remarks:
+## Remarks
 
-All the below decision is made for development speed and simplicity, and may not follow the enterprise-level standard practice. 
+All the below decision is made for development speed and simplicity, and may not follow the enterprise-level standard practice.
 
 - Database entity's constraints are set by using data annotation instead of configuration class
-- Data validation in http request object is checked by using data annotation instead of fluent validation 
+- Data validation in http request object is checked by using data annotation instead of fluent validation
