@@ -78,3 +78,4 @@ All the below decision is made for development speed and simplicity, and may not
 
 - Database entity's constraints are set by using data annotation instead of configuration class
 - Data validation in http request object is checked by using data annotation instead of fluent validation
+- Manual mapping from database entity to DTOs instead of using external library such as Automapper
