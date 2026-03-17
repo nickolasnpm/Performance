@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Performance.API.Exceptions;
-using Performance.Application.DTOs;
 using Performance.Application.Interface.Services;
+using Performance.Application.DTOs.Users;
 using Performance.Domain.Entity;
 
 namespace Performance.API.Controllers

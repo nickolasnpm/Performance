@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Performance.Domain;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Performance.Domain.Entity
 {

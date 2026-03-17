@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Performance.Domain;
 using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity

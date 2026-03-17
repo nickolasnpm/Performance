@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
-using Performance.Application.Configuration;
+using Performance.Application.Common.Settings;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.UnitOfWork;
 using Performance.Infrastructure.Repositories;

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
-using Performance.Application.Configuration;
-using Performance.Application.DTOs;
+using Performance.Application.Common.Settings;
+using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Repository;
 using Performance.Application.Interface.Repository;
 using Performance.Domain.Entity;
@@ -18,7 +18,7 @@ namespace Performance.Infrastructure.Repositories
             return userDbContext.Users.AsNoTracking();
         }
 
-        public async Task<UserPaginatedResult<User>> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
+        public async Task<PaginatedResult<User>> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
         {
             IQueryable<User> queryable = GetAll();
 
@@ -43,12 +43,12 @@ namespace Performance.Infrastructure.Repositories
 
             queryable = queryable.ApplyIncludes(includeOptions);
 
-            return new UserPaginatedResult<User>(
+            return new PaginatedResult<User>(
                 Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.PageSize).Take(request.PageSize), 
                 TotalCount: totalCount);
         }
 
-        public async Task<UserPaginatedResult<User>> GetPaginatedUsersByCursor(CursorPaginationRequest request, UserIncludeOptions includeOptions)
+        public async Task<PaginatedResult<User>> GetPaginatedUsersByCursor(CursorPaginationRequest request, UserIncludeOptions includeOptions)
         {
             IQueryable<User> queryable = GetAll();
 
@@ -82,7 +82,7 @@ namespace Performance.Infrastructure.Repositories
 
             queryable = queryable.ApplyIncludes(includeOptions);
 
-            return new UserPaginatedResult<User>(
+            return new PaginatedResult<User>(
                 Items: queryable.Take(request.PageSize + 1), 
                 TotalCount: totalCount);
         }

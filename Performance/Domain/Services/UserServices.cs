@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Performance.Application.Common;
-using Performance.Application.DTOs;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
 using Performance.Application.Extensions.Repository;
 using Performance.Domain.Entity;
+using Performance.Application.DTOs.Users;
+using Performance.Application.Common.Enums;
 
 namespace Performance.Domain.Services
 {
@@ -16,7 +16,7 @@ namespace Performance.Domain.Services
             return unitOfWork.UserRepository.GetAll();
         }
 
-        public async Task<UserResponseDTO<User>> GetPaginatedListAsync(UserRequestDTO request)
+        public async Task<UserResponseDTO<UserDTO>> GetPaginatedListAsync(UserRequestDTO request)
         {
             switch (request.PaginationType)
             {
@@ -37,7 +37,7 @@ namespace Performance.Domain.Services
             }
         }
 
-        private async Task<OffsetPaginationResponse<User>> OffsetPaginationAsync(OffsetPaginationRequest request)
+        private async Task<OffsetPaginationResponse<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
             //var (users, totalCount) = await _offsetRepository.GetPaginatedUsersByCursor(request, new UserIncludeOptions() { Address = true });
@@ -47,9 +47,9 @@ namespace Performance.Domain.Services
             bool hasNextPage = request.Page < totalPages;
             bool hasPreviousPage = request.Page > 1;
 
-            return new OffsetPaginationResponse<User>()
+            return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = await users.ToListAsync(),
+                Data = (await users.ToListAsync()).Select(u => new UserDTO(u)).ToList(),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -57,7 +57,7 @@ namespace Performance.Domain.Services
             };
         }
 
-        private async Task<CursorPaginationResponse<User>> CursorPaginationAsync(CursorPaginationRequest request)
+        private async Task<CursorPaginationResponse<UserDTO>> CursorPaginationAsync(CursorPaginationRequest request)
         {
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(request, UserIncludeOptions.All);
             var result = await users.ToListAsync();
@@ -85,9 +85,9 @@ namespace Performance.Domain.Services
             long? nextCursor = hasNextPage ? result.Last().Id : null;
             long? previousCursor = hasPreviousPage ? result.First().Id : null;
 
-            return new CursorPaginationResponse<User>
+            return new CursorPaginationResponse<UserDTO>
             {
-                Data = result,
+                Data = result.Select(u => new UserDTO(u)).ToList(),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,

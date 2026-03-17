@@ -1,4 +1,4 @@
-﻿using Performance.Application.DTOs;
+﻿using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Repository;
 using Performance.Domain.Entity;
 using Performance.Application.Common.Models;

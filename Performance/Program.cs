@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
 using Performance.API.Exceptions;
-using Performance.Application.Configuration;
+using Performance.Application.Common.Settings;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
