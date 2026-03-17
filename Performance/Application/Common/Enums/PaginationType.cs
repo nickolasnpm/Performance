@@ -1,4 +1,4 @@
-﻿namespace Performance.Application.Common
+﻿namespace Performance.Application.Common.Enums
 {
     public enum PaginationType
     {

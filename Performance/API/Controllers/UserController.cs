@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Performance.API.Exceptions;
-using Performance.Application.DTO;
+using Performance.Application.DTOs;
 using Performance.Application.Interface.Services;
 using Performance.Domain.Entity;
 

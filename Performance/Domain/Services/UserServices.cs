@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common;
-using Performance.Application.DTO;
+using Performance.Application.DTOs;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Application.Queries;
+using Performance.Application.Extensions.Repository;
 using Performance.Domain.Entity;
 
 namespace Performance.Domain.Services

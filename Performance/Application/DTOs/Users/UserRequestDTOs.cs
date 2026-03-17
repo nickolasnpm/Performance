@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Performance.Application.Common;
+using Performance.Application.Common.Enums;
 
-namespace Performance.Application.DTO
+namespace Performance.Application.DTOs.Users
 {
     public class UserRequestDTO
     {

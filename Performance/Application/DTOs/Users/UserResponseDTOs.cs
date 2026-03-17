@@ -1,4 +1,4 @@
-﻿namespace Performance.Application.DTO
+﻿namespace Performance.Application.DTOs.Users
 {
     public class UserResponseDTO<T>
     {

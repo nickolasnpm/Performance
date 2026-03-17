@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Performance.Domain;
 using Performance.Domain.Entity;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Performance.Infrastructure
 {

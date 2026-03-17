@@ -2,7 +2,7 @@
 using Performance.Application.Extensions.Repository;
 using Performance.Domain.Entity;
 
-namespace Performance.Application.Queries
+namespace Performance.Application.Extensions.Repository
 {
     public record UserIncludeOptions: IncludeOptions<User>
     {

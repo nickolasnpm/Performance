@@ -1,4 +1,4 @@
-﻿namespace Performance.Application.Configuration
+﻿namespace Performance.Application.Common.Settings
 {
     public class CacheSettings
     {

@@ -2,10 +2,9 @@
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Configuration;
-using Performance.Application.DTO;
+using Performance.Application.DTOs;
 using Performance.Application.Extensions.Repository;
 using Performance.Application.Interface.Repository;
-using Performance.Application.Queries;
 using Performance.Domain.Entity;
 using Performance.Infrastructure.Caching;
 

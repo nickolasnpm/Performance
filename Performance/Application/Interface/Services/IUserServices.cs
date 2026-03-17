@@ -1,4 +1,4 @@
-﻿using Performance.Application.DTO;
+﻿using Performance.Application.DTOs;
 using Performance.Domain.Entity;
 
 namespace Performance.Application.Interface.Services

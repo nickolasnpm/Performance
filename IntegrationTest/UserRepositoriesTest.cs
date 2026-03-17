@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Performance.Application.Configuration;
-using Performance.Application.DTO;
+using Performance.Application.DTOs;
 using Performance.Application.Queries;
 using Performance.Infrastructure.Repositories;
 
