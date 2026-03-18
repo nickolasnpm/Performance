@@ -17,46 +17,18 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-#region OData configuration
-var modelBuilder = new ODataConventionModelBuilder();
-modelBuilder.EntitySet<User>("UsersOData");
-var edmModel = modelBuilder.GetEdmModel();
-
-builder.Services.AddControllers().AddOData(options => options
-        .Select()
-        .Filter()
-        .OrderBy()
-        .Count()
-        .Expand()
-        .SetMaxTop(1000)
-        .AddRouteComponents("odata", edmModel));
-#endregion
-
-builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
-builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-        ValidationResponseFactory.Create(context, loggerFactory.CreateLogger<Program>());
-});
-
 builder.Services.AddDbContextPool<UserDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>
         {
             sqlOptions
-            .EnableRetryOnFailure(
-                maxRetryCount: 3,
-                maxRetryDelay: TimeSpan.FromSeconds(5),
-                errorNumbersToAdd: null
-            )
-            .CommandTimeout(300);
+                .EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null
+                )
+                .CommandTimeout(300);
 
             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "Performance");
         }
@@ -71,12 +43,47 @@ builder.Services.AddScoped<IUserServices, UserServices>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepositories, UserRepositories>();
 
+var modelBuilder = new ODataConventionModelBuilder();
+modelBuilder.EntitySet<User>("UsersOData");
+var edmModel = modelBuilder.GetEdmModel();
+
+builder.Services.AddControllers()
+    .AddOData(options => options
+        .Select()
+        .Filter()
+        .OrderBy()
+        .Count()
+        .Expand()
+        .SetMaxTop(1000)
+        .AddRouteComponents("odata", edmModel))
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            context.HttpContext.Items["ModelState"] = context.ModelState;
+            context.HttpContext.Items["Instance"] = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<ErrorController>>();
+            var errorController = new ErrorController(logger)
+            {
+                ControllerContext = new ControllerContext { HttpContext = context.HttpContext }
+            };
+            return errorController.HandleValidationError();
+        };
+    });
+
+builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    ExceptionHandlingPath = "/error",
+    SuppressDiagnosticsCallback = context => true,
+});
 app.UseStatusCodePages();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -89,9 +96,7 @@ if (!app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
