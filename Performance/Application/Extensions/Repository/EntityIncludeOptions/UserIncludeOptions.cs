@@ -1,10 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Performance.Application.Extensions.Repository;
 using Performance.Domain.Entity;
 
-namespace Performance.Application.Extensions.Repository
+namespace Performance.Application.Extensions.Repository.EntityIncludeOptions
 {
-    public record UserIncludeOptions: IncludeOptions<User>
+    public record UserIncludeOptions: BaseIncludeOptions<User>
     {
         public bool Roles { get; init; }
         public bool Address { get; init; }

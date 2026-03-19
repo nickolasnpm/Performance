@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 
 namespace Performance.Application.Extensions.Repository
 {
@@ -6,15 +6,8 @@ namespace Performance.Application.Extensions.Repository
     {
         extension<TEntity>(IQueryable<TEntity> query) where TEntity : class
         {
-            public IQueryable<TEntity> ApplyIncludes(IncludeOptions<TEntity> options)
+            public IQueryable<TEntity> ApplyIncludes(BaseIncludeOptions<TEntity> options)
                 => options.ApplyTo(query);
         }
-    }
-
-
-    // record has structural equality that compare every property value one by one
-    public abstract record IncludeOptions<TEntity> where TEntity : class
-    {
-        internal abstract IQueryable<TEntity> ApplyTo(IQueryable<TEntity> query);
     }
 }

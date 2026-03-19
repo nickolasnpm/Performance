@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Application.Extensions.Repository;
+using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Domain.Entity;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Common.Enums;
+using Performance.Application.Extensions.Mapping.Users;
 
 namespace Performance.Domain.Services
 {
@@ -49,7 +50,7 @@ namespace Performance.Domain.Services
 
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = (await users.ToListAsync()).Select(u => new UserDTO(u)).ToList(),
+                Data = await users.Select(u => u.ToDTO()).ToListAsync(),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -87,7 +88,7 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.Select(u => new UserDTO(u)).ToList(),
+                Data = result.Select(u => u.ToDTO()).ToList(),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,

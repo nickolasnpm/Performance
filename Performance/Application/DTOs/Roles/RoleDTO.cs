@@ -7,14 +7,5 @@ namespace Performance.Application.DTOs.Roles
     {
         public long Id { get; set; }
         public required string Name { get; set; }
-
-
-        // only for mapping from Role entity to RoleDTO
-        [SetsRequiredMembers]
-        public RoleDTO(Role role)
-        {
-            Id = role.Id;
-            Name = role.Name;
-        }
     }
 }

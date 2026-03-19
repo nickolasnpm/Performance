@@ -4,6 +4,7 @@ using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Repository;
+using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Repository;
 using Performance.Domain.Entity;
 using Performance.Infrastructure.Caching;
