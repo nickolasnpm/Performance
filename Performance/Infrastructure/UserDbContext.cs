@@ -3,13 +3,8 @@ using Performance.Domain.Entity;
 
 namespace Performance.Infrastructure
 {
-    public class UserDbContext : DbContext
+    public class UserDbContext (DbContextOptions options) : DbContext(options)
     {
-        public UserDbContext(DbContextOptions options) : base(options)
-        {
-
-        }
-
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<BankAccount> BankAccounts { get; set; }
