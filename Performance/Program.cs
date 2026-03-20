@@ -60,15 +60,29 @@ builder.Services.AddControllers()
     {
         options.InvalidModelStateResponseFactory = context =>
         {
-            context.HttpContext.Items["ModelState"] = context.ModelState;
-            context.HttpContext.Items["Instance"] = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .SelectMany(kvp => kvp.Value!.Errors.Select(err => new FieldValidationError
+                {
+                    Field = kvp.Key,
+                    Message = err.ErrorMessage
+                }))
+                .ToList();
 
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<ErrorController>>();
-            var errorController = new ErrorController(logger)
+            var problemDetails = new ProblemDetails
             {
-                ControllerContext = new ControllerContext { HttpContext = context.HttpContext }
+                Title = "Request validation failed",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = $"{errors.Count} validation error(s) occurred.",
+                Instance = context.HttpContext.Request.Path,
+                Extensions =
+                {
+                    ["traceId"] = context.HttpContext.TraceIdentifier,
+                    ["errors"] = errors
+                }
             };
-            return errorController.HandleValidationError();
+
+            return new BadRequestObjectResult(problemDetails);
         };
     });
 
