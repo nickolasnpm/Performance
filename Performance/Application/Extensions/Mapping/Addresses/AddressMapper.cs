@@ -5,7 +5,7 @@ namespace Performance.Application.Extensions.Mapping.Addresses
 {
     public static class AddressMapper
     {
-        public static AddressDTO ToDTO(this Address address) => new()
+        public static AddressDTO ToDTO(Address address) => new()
         {
             Id = address.Id,
             AddressLine = address.AddressLine,

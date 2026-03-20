@@ -5,7 +5,7 @@ namespace Performance.Application.Extensions.Mapping.LoanRepayments
 {
     public static class LoanRepaymentMapper
     {
-        public static LoanRepaymentDTO ToDTO(this LoanRepayment loanRepayment) => new()
+        public static LoanRepaymentDTO ToDTO(LoanRepayment loanRepayment) => new()
         {
             Id = loanRepayment.Id,
             ScheduledDate = loanRepayment.ScheduledDate,

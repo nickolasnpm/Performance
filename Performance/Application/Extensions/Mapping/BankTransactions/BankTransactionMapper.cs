@@ -5,7 +5,7 @@ namespace Performance.Application.Extensions.Mapping.BankTransactions
 {
     public static class BankTransactionMapper
     {
-        public static BankTransactionDTO ToDTO(this BankTransaction bankTransaction) => new()
+        public static BankTransactionDTO ToDTO(BankTransaction bankTransaction) => new()
         {
             Id = bankTransaction.Id,
             BaseAmount = bankTransaction.BaseAmount,

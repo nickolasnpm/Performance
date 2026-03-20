@@ -5,7 +5,7 @@ namespace Performance.Application.Extensions.Mapping.SupportTicketComments
 {
     public static class SupportTicketCommentMapper
     {
-        public static SupportTicketCommentDTO ToDTO(this SupportTicketComment comment) => new()
+        public static SupportTicketCommentDTO ToDTO(SupportTicketComment comment) => new()
         {
             Id = comment.Id,
             CommentText = comment.CommentText,

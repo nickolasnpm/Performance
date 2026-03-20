@@ -6,6 +6,8 @@ using Performance.Domain.Entity;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Common.Enums;
 using Performance.Application.Extensions.Mapping.Users;
+using Microsoft.AspNetCore.Identity;
+using Performance.Application.Extensions.Mapping;
 
 namespace Performance.Domain.Services
 {
@@ -48,9 +50,11 @@ namespace Performance.Domain.Services
             bool hasNextPage = request.Page < totalPages;
             bool hasPreviousPage = request.Page > 1;
 
+            // var result = await users.ToListAsync();
+
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = await users.Select(u => u.ToDTO()).ToListAsync(),
+                Data = users.MapToDTO(UserMapper.ToDTO),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -88,7 +92,7 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.Select(u => u.ToDTO()).ToList(),
+                Data = result.MapToDTO(UserMapper.ToDTO),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,

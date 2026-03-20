@@ -11,7 +11,7 @@ namespace Performance.Application.Extensions.Mapping.Users
 {
     public static class UserMapper
     {
-        public static UserDTO ToDTO(this User user) => new()
+        public static UserDTO ToDTO(User user) => new()
         {
             Id = user.Id,
             Username = user.Username,
@@ -24,12 +24,12 @@ namespace Performance.Application.Extensions.Mapping.Users
             IsEmailVerified = user.IsEmailVerified,
             IsActive = user.IsActive,
             LastLoginAt = user.LastLoginAt,
-            Address = user.Address != null ? user.Address.ToDTO() : null,
-            Roles = user.Roles.Select(r => r.ToDTO()).ToList(),
-            BankAccount = user.BankAccount != null ? user.BankAccount.ToDTO() : null,
-            CreditCards = user.CreditCards.Select(cc => cc.ToDTO()).ToList(),
-            Loans = user.Loans.Select(l => l.ToDTO()).ToList(),
-            SupportTickets = user.SupportTickets.Select(st => st.ToDTO()).ToList()
+            Address = user.Address != null ? user.Address.MapToDTO(AddressMapper.ToDTO) : null,
+            Roles = user.Roles.Select(r => r.MapToDTO(RoleMapper.ToDTO)).ToList(),
+            BankAccount = user.BankAccount != null ? user.BankAccount.MapToDTO(BankAccountMapper.ToDTO) : null,
+            CreditCards = user.CreditCards.Select(cc => cc.MapToDTO(CreditCardMapper.ToDTO)).ToList(),
+            Loans = user.Loans.Select(l => l.MapToDTO(LoanMapper.ToDTO)).ToList(),
+            SupportTickets = user.SupportTickets.Select(st => st.MapToDTO(SupportTicketMapper.ToDTO)).ToList()
         };
     }
 }

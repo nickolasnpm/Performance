@@ -6,7 +6,7 @@ namespace Performance.Application.Extensions.Mapping.Loans
 {
     public static class LoanMapper
     {
-        public static LoanDTO ToDTO(this Loan loan) => new()
+        public static LoanDTO ToDTO(Loan loan) => new()
         {
             Id = loan.Id,
             LoanType = loan.LoanType,
@@ -20,7 +20,7 @@ namespace Performance.Application.Extensions.Mapping.Loans
             MonthlyPaymentAmount = loan.MonthlyPaymentAmount,
             IsFullyPaid = loan.IsFullyPaid,
             UserId = loan.UserId,
-            Repayments = loan.Repayments != null ? loan.Repayments.Select(r => r.ToDTO()).ToList() : null
+            Repayments = loan.Repayments != null ? loan.Repayments.MapToDTO(LoanRepaymentMapper.ToDTO) : null
         };
     }
 }

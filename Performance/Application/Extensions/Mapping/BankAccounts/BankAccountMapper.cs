@@ -6,14 +6,14 @@ namespace Performance.Application.Extensions.Mapping.BankAccounts
 {
     public static class BankAccountMapper
     {
-        public static BankAccountDTO ToDTO(this BankAccount bankAccount) => new()
+        public static BankAccountDTO ToDTO(BankAccount bankAccount) => new()
         {
             Id = bankAccount.Id,
             AccountNumber = bankAccount.AccountNumber,
             CurrentBalance = bankAccount.CurrentBalance,
             AvailableBalance = bankAccount.AvailableBalance,
             UserId = bankAccount.UserId,
-            Transactions = bankAccount.Transactions != null ? bankAccount.Transactions.Select(t => t.ToDTO()).ToList() : null
+            Transactions = bankAccount.Transactions != null ? bankAccount.Transactions.MapToDTO(BankTransactionMapper.ToDTO) : null
         };
     }
 }

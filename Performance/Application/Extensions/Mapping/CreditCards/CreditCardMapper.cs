@@ -6,7 +6,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
 {
     public static class CreditCardMapper
     {
-        public static CreditCardDTO ToDTO(this CreditCard creditCard) => new()
+        public static CreditCardDTO ToDTO(CreditCard creditCard) => new()
         {
             Id = creditCard.Id,
             CardNumber = creditCard.CardNumber,
@@ -18,7 +18,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
             IsDefault = creditCard.IsDefault,
             CreditLimit = creditCard.CreditLimit,
             UserId = creditCard.UserId,
-            Statements = creditCard.Statements != null ? creditCard.Statements.Select(s => s.ToDTO()).ToList() : null
+            Statements = creditCard.Statements != null ? creditCard.Statements.MapToDTO(CreditCardStatementMapper.ToDTO) : null
         };
     }
 }

@@ -5,7 +5,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCardStatements
 {
     public static class CreditCardStatementMapper
     {
-        public static CreditCardStatementDTO ToDTO(this CreditCardStatement statement) => new()
+        public static CreditCardStatementDTO ToDTO(CreditCardStatement statement) => new()
         {
             Id = statement.Id,
             StatementDate = statement.StatementDate,
