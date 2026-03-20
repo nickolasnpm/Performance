@@ -20,7 +20,7 @@ namespace Performance.Application.Extensions.Mapping.Loans
             MonthlyPaymentAmount = loan.MonthlyPaymentAmount,
             IsFullyPaid = loan.IsFullyPaid,
             UserId = loan.UserId,
-            Repayments = loan.Repayments != null ? loan.Repayments.MapToDTO(LoanRepaymentMapper.ToDTO) : null
+            Repayments = loan.Repayments?.MapToDTO(LoanRepaymentMapper.ToDTO) ?? null
         };
     }
 }

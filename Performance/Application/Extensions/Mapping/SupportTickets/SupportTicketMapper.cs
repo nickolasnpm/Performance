@@ -14,7 +14,7 @@ namespace Performance.Application.Extensions.Mapping.SupportTickets
             Description = supportTicket.Description,
             Priority = supportTicket.Priority,
             IsResolved = supportTicket.IsResolved,
-            Comments = supportTicket.Comments != null ? supportTicket.Comments.MapToDTO(SupportTicketCommentMapper.ToDTO) : null
+            Comments = supportTicket.Comments?.MapToDTO(SupportTicketCommentMapper.ToDTO) ?? null
         };
     }
 }
