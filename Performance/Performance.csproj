@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6b354ead-2450-465c-9f06-122c591a4ce8</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	<GenerateResourceUsePreserializedResources>false</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
 
 	<ItemGroup>
