@@ -1,19 +1,19 @@
 parameters:
-  # ── Agent ──────────────────────────────────────────────────────────────────
+  # Agent
   - name: poolName
     type: string
 
   - name: agentName
     type: string
 
-  # ── Environment ────────────────────────────────────────────────────────────
+  # Environment
   - name: appEnv
     type: string
 
   - name: targetBranch
     type: string
 
-  # ── Container ──────────────────────────────────────────────────────────────
+  # Container
   - name: apiContainerName
     type: string
 
@@ -23,7 +23,7 @@ parameters:
   - name: apiPort
     type: string
 
-  # ── Registry ───────────────────────────────────────────────────────────────
+  # Registry
   - name: acrShortName
     type: string
 
@@ -41,7 +41,7 @@ parameters:
 
 stages:
 
-  # ─── CD Stage ──────────────────────────────────────────────────────────────
+  # CD Stage
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
     dependsOn:
@@ -68,25 +68,21 @@ stages:
             deploy:
               steps:
 
-                # ─── Authenticate ─────────────────────────────────────────────
                 - script: |
                     docker login $(acrName) \
                       --username $(acrUsername) \
                       --password $(acrPassword)
                   displayName: 'Authenticate Docker with ACR'
 
-                # ─── Pull Latest Image ────────────────────────────────────────
                 - script: |
                     docker pull $(acrName)/${{ parameters.imageName }}:latest
                   displayName: 'Pull Latest Image from ACR'
 
-                # ─── Replace Old Container ────────────────────────────────────
                 - script: |
                     docker stop ${{ parameters.apiContainerName }} || true
                     docker rm   ${{ parameters.apiContainerName }} || true
                   displayName: 'Remove Old Container'
 
-                # ─── Run New Container ────────────────────────────────────────
                 - script: |
                     docker run -d \
                       --name ${{ parameters.apiContainerName }} \
@@ -103,7 +99,6 @@ stages:
                       $(acrName)/${{ parameters.imageName }}:latest
                   displayName: 'Run New Container'
 
-                # ─── Health Check Verification ────────────────────────────────
                 - script: |
                     echo "Checking ${{ parameters.apiContainerName }} health status..."
                     until [ "$(docker inspect --format '{{.State.Health.Status}}' ${{ parameters.apiContainerName }})" = "healthy" ]; do
@@ -113,7 +108,6 @@ stages:
                     echo "${{ parameters.apiContainerName }} is healthy!"
                   displayName: 'Verify Container Health'
 
-                # ─── Cleanup Old Local Images ─────────────────────────────────
                 - script: |
                     echo "Removing dangling images..."
                     docker image prune -f
@@ -128,7 +122,6 @@ stages:
                     echo "Local cleanup complete!"
                   displayName: 'Cleanup Old Local Images'
 
-                # ─── Cleanup Old ACR Images ───────────────────────────────────
                 - script: |
                     echo "Cleaning up old images in ACR..."
                     az acr repository show-tags \

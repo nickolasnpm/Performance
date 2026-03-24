@@ -26,7 +26,7 @@ COPY ["Performance/Performance.csproj", "Performance/"]
 RUN dotnet restore "./Performance/Performance.csproj"
 COPY . .
 WORKDIR "/src/Performance"
-RUN dotnet tool install --global dotnet-ef
+RUN dotnet tool install --global dotnet-ef --version 10.0.3
 ENV PATH="$PATH:/root/.dotnet/tools"
 ENTRYPOINT ["dotnet-ef", "database", "update", "--project", "Performance.csproj"]
 

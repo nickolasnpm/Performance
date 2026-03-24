@@ -1,23 +1,23 @@
 parameters:
-  # ── Agent ──────────────────────────────────────────────────────────────────
+  # Agent 
   - name: poolName
     type: string
 
   - name: agentName
     type: string
 
-  # ── Environment ────────────────────────────────────────────────────────────
+  # Environment
   - name: appEnv
     type: string
 
-  # ── Container ──────────────────────────────────────────────────────────────
+  # Container
   - name: apiContainerName
     type: string
 
   - name: dockerNetwork
     type: string
 
-  # ── Registry ───────────────────────────────────────────────────────────────
+  # Registry
   - name: imageName
     type: string
 
@@ -30,7 +30,6 @@ stages:
   # ─── Migration Stage ───────────────────────────────────────────────────────
   - stage: Migrate
     displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
-    # ✅ Only run on Production AND only after merge (not on PR)
     condition: |
       and(
         eq('${{ parameters.appEnv }}', 'Production'),
@@ -51,7 +50,6 @@ stages:
             deploy:
               steps:
 
-                # ─── Build Migration Image ────────────────────────────────────
                 - script: |
                     echo "Building migration image from SDK stage..."
                     docker build \
@@ -62,7 +60,6 @@ stages:
                       $(Build.SourcesDirectory)
                   displayName: 'Build Migration Image'
 
-                # ─── Run EF Core Migrations ───────────────────────────────────
                 - script: |
                     echo "Running EF Core migrations..."
 
@@ -83,7 +80,6 @@ stages:
                     echo "EF Core migrations applied successfully!"
                   displayName: 'Run EF Core Migrations'
 
-                # ─── Cleanup Migration Image ──────────────────────────────────
                 - script: |
                     echo "Removing local migration image..."
                     docker rmi $(acrName)/${{ parameters.imageName }}:migrate 2>/dev/null || true

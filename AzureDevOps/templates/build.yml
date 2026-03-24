@@ -1,12 +1,12 @@
 parameters:
-  # ── Agent ──────────────────────────────────────────────────────────────────
+  # Agent
   - name: poolName
     type: string
 
   - name: agentName
     type: string
 
-  # ── Registry ───────────────────────────────────────────────────────────────
+  # Registry
   - name: imageName
     type: string
 
@@ -15,7 +15,7 @@ parameters:
 
 stages:
 
-  # ─── CI Stage ──────────────────────────────────────────────────────────────
+  # CI Stage
   - stage: Build
     displayName: 'Build & Push Docker Image'
     variables:
@@ -31,7 +31,6 @@ stages:
       integrationCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/integration-coverage.xml'
     jobs:
 
-      # ─── Job 1: Run Unit Tests ──────────────────────────────────────────────
       - job: RunUnitTests
         displayName: 'Run Unit Tests'
         pool:
@@ -74,7 +73,6 @@ stages:
             inputs:
               summaryFileLocation: '$(unitCoverageResultsFile)'
 
-      # ─── Job 2: Run Integration Tests ──────────────────────────────────────
       - job: RunIntegrationTests
         displayName: 'Run Integration Tests'
         dependsOn: RunUnitTests
@@ -119,7 +117,6 @@ stages:
             inputs:
               summaryFileLocation: '$(integrationCoverageResultsFile)'
 
-      # ─── Job 3: Build and Push Docker Image ────────────────────────────────
       - job: BuildImage
         displayName: 'Build Docker Image'
         dependsOn: RunIntegrationTests

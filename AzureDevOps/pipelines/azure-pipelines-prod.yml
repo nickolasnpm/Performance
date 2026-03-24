@@ -19,7 +19,7 @@ parameters:
 
 stages:
 
-  # ─── CI Stage ──────────────────────────────────────────────────────────────
+  # CI Stage
   - template: ../templates/build.yml
     parameters:
       poolName: ${{ parameters.poolName }}
@@ -27,7 +27,7 @@ stages:
       imageName: 'performance'
       serviceConnection: 'testregistryname'
 
-  # ─── Migrations Stage ──────────────────────────────────────────────────────
+  # Migrations Stage
   - template: ../templates/migrations.yml
     parameters:
       poolName: ${{ parameters.poolName }}
@@ -37,7 +37,7 @@ stages:
       dockerNetwork: 'performance-network-prod'
       imageName: 'performance'
 
-  # ─── CD Stage ──────────────────────────────────────────────────────────────
+  # CD Stage
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}

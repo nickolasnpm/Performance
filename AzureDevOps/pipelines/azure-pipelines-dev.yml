@@ -19,7 +19,7 @@ parameters:
 
 stages:
 
-  # ─── CI Stage ──────────────────────────────────────────────────────────────
+  # CI Stage 
   - template: ../templates/build.yml
     parameters:
       poolName: ${{ parameters.poolName }}
@@ -27,19 +27,16 @@ stages:
       imageName: 'performance'
       serviceConnection: 'testregistryname'
 
-  # ─── CD Stage ──────────────────────────────────────────────────────────────
+  # CD Stage 
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      # ── Environment ──────────────────────────────────────────────────────
       appEnv: 'Development'
       targetBranch: 'refs/heads/develop'
-      # ── Container ────────────────────────────────────────────────────────
       apiContainerName: 'performance-webapi-dev'
       dockerNetwork: 'performance-network-dev'
       apiPort: '8080'
-      # ── Registry ─────────────────────────────────────────────────────────
       acrShortName: 'testregistryname'
       imageName: 'performance'
       keepImages: '10'
