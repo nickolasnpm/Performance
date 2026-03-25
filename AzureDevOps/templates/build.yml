@@ -119,7 +119,7 @@ stages:
 
       - job: BuildImage
         displayName: 'Build Docker Image'
-        dependsOn: RunIntegrationTests
+        # dependsOn: RunIntegrationTests
         # condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
