@@ -20,15 +20,10 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./Performance.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Migration stage
-FROM --platform=linux/arm64 mcr.microsoft.com/dotnet/sdk:10.0 AS migrate
-WORKDIR /src
-COPY ["Performance/Performance.csproj", "Performance/"]
-RUN dotnet restore "./Performance/Performance.csproj"
-COPY . .
-WORKDIR "/src/Performance"
+FROM build AS migrate
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
-ENTRYPOINT ["dotnet-ef", "database", "update", "--project", "Performance.csproj"]
+ENTRYPOINT ["dotnet-ef", "database", "update", "--no-build", "--verbose", "--project", "Performance.csproj"]
 
 # Final stage
 FROM base AS final

@@ -1,5 +1,5 @@
 parameters:
-  # Agent 
+  # Agent
   - name: poolName
     type: string
 
@@ -27,7 +27,7 @@ parameters:
 
 stages:
 
-  # Migration Stage 
+  # Migration Stage
   - stage: Migrate
     displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
     condition: |
@@ -37,9 +37,12 @@ stages:
       )
     variables:
       dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+      migrateImageTag: '${{ parameters.imageName }}:migrate-local'
+
     jobs:
       - deployment: RunMigrations
         displayName: 'Run EF Core Migrations on Raspberry Pi'
+        timeoutInMinutes: 10
         environment: 'raspberry-pi'
         pool:
           name: ${{ parameters.poolName }}
@@ -50,13 +53,15 @@ stages:
             deploy:
               steps:
 
+                - checkout: self
+                  displayName: 'Checkout Source Code'
+
                 - script: |
-                    echo "Building migration image from SDK stage..."
+                    echo "Building migration image..."
                     docker build \
-                      --no-cache \
                       --platform linux/arm64 \
                       --target migrate \
-                      -t $(acrName)/${{ parameters.imageName }}:migrate \
+                      -t $(migrateImageTag) \
                       -f $(dockerfilePath) \
                       $(Build.SourcesDirectory)
                   displayName: 'Build Migration Image'
@@ -65,12 +70,12 @@ stages:
                     echo "Running EF Core migrations..."
 
                     docker run --rm \
+                      --stop-timeout 60 \
                       --name ${{ parameters.apiContainerName }}-migration \
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      $(acrName)/${{ parameters.imageName }}:migrate \
-                      dotnet-ef database update --verbose
+                      $(migrateImageTag)
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then
@@ -83,7 +88,7 @@ stages:
 
                 - script: |
                     echo "Removing local migration image..."
-                    docker rmi $(acrName)/${{ parameters.imageName }}:migrate 2>/dev/null || true
+                    docker rmi $(migrateImageTag) 2>/dev/null || true
                     echo "Migration image removed!"
                   displayName: 'Cleanup Migration Image'
                   condition: always()
