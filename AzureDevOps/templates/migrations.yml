@@ -36,8 +36,7 @@ stages:
         ne(variables['Build.Reason'], 'PullRequest')
       )
     variables:
-      dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-      migrateImageTag: '${{ parameters.imageName }}:migrate-local'
+      migrateImageTag: '$(acrName).azurecr.io/${{ parameters.imageName }}:$(Build.BuildId)'
 
     jobs:
       - deployment: RunMigrations
@@ -53,18 +52,10 @@ stages:
             deploy:
               steps:
 
-                - checkout: self
-                  displayName: 'Checkout Source Code'
-
                 - script: |
-                    echo "Building migration image..."
-                    docker build \
-                      --platform linux/arm64 \
-                      --target migrate \
-                      -t $(migrateImageTag) \
-                      -f $(dockerfilePath) \
-                      $(Build.SourcesDirectory)
-                  displayName: 'Build Migration Image'
+                    echo "Pulling migration image from ACR..."
+                    docker pull $(migrateImageTag)
+                  displayName: 'Pull Image from ACR'
 
                 - script: |
                     echo "Running EF Core migrations..."
