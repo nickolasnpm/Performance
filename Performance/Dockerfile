@@ -21,13 +21,12 @@ RUN dotnet publish "./Performance.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 
 # Migration stage
 FROM --platform=linux/arm64 mcr.microsoft.com/dotnet/sdk:10.0 AS migrate
-ARG EF_VERSION
 WORKDIR /src
 COPY ["Performance/Performance.csproj", "Performance/"]
 RUN dotnet restore "./Performance/Performance.csproj"
 COPY . .
 WORKDIR "/src/Performance"
-RUN dotnet tool install --global dotnet-ef --version $EF_VERSION
+RUN dotnet tool install --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
 ENTRYPOINT ["dotnet-ef", "database", "update", "--project", "Performance.csproj"]
 

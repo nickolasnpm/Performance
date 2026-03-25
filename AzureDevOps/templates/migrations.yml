@@ -56,7 +56,6 @@ stages:
                       --no-cache \
                       --platform linux/arm64 \
                       --target migrate \
-                      --build-arg EF_VERSION=$(grep -oP '(?<=<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version=")[^"]+' $(Build.SourcesDirectory)/Performance/Performance.csproj) \
                       -t $(acrName)/${{ parameters.imageName }}:migrate \
                       -f $(dockerfilePath) \
                       $(Build.SourcesDirectory)
