@@ -21,6 +21,9 @@ parameters:
   - name: imageName
     type: string
 
+  - name: keepImages
+    type: string
+
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
   # acrName
@@ -39,7 +42,6 @@ stages:
     jobs:
       - deployment: RunMigrations
         displayName: "Run EF Core Migrations on Raspberry Pi"
-        timeoutInMinutes: 10
         environment: "raspberry-pi"
         pool:
           name: ${{ parameters.poolName }}
@@ -80,8 +82,15 @@ stages:
                   displayName: "Run EF Core Migrations"
 
                 - script: |
-                    echo "Removing local migration image..."
-                    docker rmi $(migrateImageTag) 2>/dev/null || true
-                    echo "Migration image removed!"
-                  displayName: "Cleanup Migration Image"
-                  condition: always()
+                    echo "Removing dangling images..."
+                    docker image prune -f
+
+                    echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
+                    docker images $(acrName)/${{ parameters.imageName }} --format "{{.Tag}}" | \
+                      grep -v latest | \
+                      sort -rn | \
+                      tail -n +$((${{ parameters.keepImages }} + 1)) | \
+                      xargs -I {} docker rmi $(acrName)/${{ parameters.imageName }}:{} 2>/dev/null || true
+
+                    echo "Local cleanup complete!"
+                  displayName: "Cleanup Old Local Images"
