@@ -80,6 +80,18 @@ stages:
 
                     echo "EF Core migrations applied successfully!"
                   displayName: "Run EF Core Migrations"
+                  timeoutInMinutes: 10
+
+                - script: |
+                    echo "Removing migration container if still running or exited..."
+                    docker rm -f ${{ parameters.apiContainerName }}-migration 2>/dev/null || true
+                    echo "Migration container removed."
+
+                    echo "Removing pulled migration image..."
+                    docker rmi $(acrName)/${{ parameters.imageName }}:latest 2>/dev/null || true
+                    echo "Migration image removed."
+                  displayName: "Remove Migration Container & Image"
+                  condition: always()
 
                 - script: |
                     echo "Removing dangling images..."
@@ -94,3 +106,4 @@ stages:
 
                     echo "Local cleanup complete!"
                   displayName: "Cleanup Old Local Images"
+                  condition: always()
