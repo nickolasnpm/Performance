@@ -24,25 +24,23 @@ parameters:
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
   # acrName
+  # acrUsername
+  # acrPassword
 
 stages:
-
   # Migration Stage
   - stage: Migrate
-    displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
+    displayName: "EF Core Migrations (${{ parameters.appEnv }})"
     condition: |
       and(
         eq('${{ parameters.appEnv }}', 'Production'),
         ne(variables['Build.Reason'], 'PullRequest')
       )
-    variables:
-      migrateImageTag: '$(acrName).azurecr.io/${{ parameters.imageName }}:$(Build.BuildId)'
-
     jobs:
       - deployment: RunMigrations
-        displayName: 'Run EF Core Migrations on Raspberry Pi'
+        displayName: "Run EF Core Migrations on Raspberry Pi"
         timeoutInMinutes: 10
-        environment: 'raspberry-pi'
+        environment: "raspberry-pi"
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -51,11 +49,15 @@ stages:
           runOnce:
             deploy:
               steps:
+                - script: |
+                    docker login $(acrName) \
+                      --username $(acrUsername) \
+                      --password $(acrPassword)
+                  displayName: "Authenticate Docker with ACR"
 
                 - script: |
-                    echo "Pulling migration image from ACR..."
-                    docker pull $(migrateImageTag)
-                  displayName: 'Pull Image from ACR'
+                    docker pull $(acrName)/${{ parameters.imageName }}:latest
+                  displayName: "Pull Latest Image from ACR"
 
                 - script: |
                     echo "Running EF Core migrations..."
@@ -66,7 +68,7 @@ stages:
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      $(migrateImageTag)
+                      $(acrName)/${{ parameters.imageName }}:latest
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then
@@ -75,11 +77,11 @@ stages:
                     fi
 
                     echo "EF Core migrations applied successfully!"
-                  displayName: 'Run EF Core Migrations'
+                  displayName: "Run EF Core Migrations"
 
                 - script: |
                     echo "Removing local migration image..."
                     docker rmi $(migrateImageTag) 2>/dev/null || true
                     echo "Migration image removed!"
-                  displayName: 'Cleanup Migration Image'
+                  displayName: "Cleanup Migration Image"
                   condition: always()

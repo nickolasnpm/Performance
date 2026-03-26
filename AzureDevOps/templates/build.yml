@@ -14,23 +14,21 @@ parameters:
     type: string
 
 stages:
-
   # CI Stage
   - stage: Build
-    displayName: 'Build & Push Docker Image'
+    displayName: "Build & Push Docker Image"
     variables:
-      imageTag: '$(Build.BuildId)'
-      rootPath: '$(Build.SourcesDirectory)'
-      dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-      unitTestPath: '$(Build.SourcesDirectory)/UnitTest'
-      integrationTestPath: '$(Build.SourcesDirectory)/IntegrationTest'
-      testResultsPath: '$(Agent.TempDirectory)/TestResults'
-      unitTestResultsFile: '$(Agent.TempDirectory)/TestResults/unit-test-results.trx'
-      unitCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/unit-coverage.xml'
-      integrationTestResultsFile: '$(Agent.TempDirectory)/TestResults/integration-test-results.trx'
-      integrationCoverageResultsFile: '$(Agent.TempDirectory)/TestResults/integration-coverage.xml'
+      imageTag: "$(Build.BuildId)"
+      rootPath: "$(Build.SourcesDirectory)"
+      dockerfilePath: "$(Build.SourcesDirectory)/Performance/Dockerfile"
+      unitTestPath: "$(Build.SourcesDirectory)/UnitTest"
+      integrationTestPath: "$(Build.SourcesDirectory)/IntegrationTest"
+      testResultsPath: "$(Agent.TempDirectory)/TestResults"
+      unitTestResultsFile: "$(Agent.TempDirectory)/TestResults/unit-test-results.trx"
+      unitCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/unit-coverage.xml"
+      integrationTestResultsFile: "$(Agent.TempDirectory)/TestResults/integration-test-results.trx"
+      integrationCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/integration-coverage.xml"
     jobs:
-
       # - job: RunUnitTests
       #   displayName: 'Run Unit Tests'
       #   pool:
@@ -118,7 +116,7 @@ stages:
       #         summaryFileLocation: '$(integrationCoverageResultsFile)'
 
       - job: BuildImage
-        displayName: 'Build Docker Image'
+        displayName: "Build Docker Image"
         # dependsOn: RunIntegrationTests
         # condition: succeeded()
         pool:
@@ -126,21 +124,20 @@ stages:
           demands:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
-
           - task: Docker@2
-            displayName: 'Build Docker Image'
+            displayName: "Build Docker Image"
             inputs:
               command: build
               containerRegistry: ${{ parameters.serviceConnection }}
               repository: ${{ parameters.imageName }}
-              dockerfile: '$(dockerfilePath)'
-              buildContext: '$(rootPath)'
+              dockerfile: "$(dockerfilePath)"
+              buildContext: "$(rootPath)"
               tags: |
                 $(imageTag)
                 latest
 
           - task: Docker@2
-            displayName: 'Push to ACR'
+            displayName: "Push to ACR"
             condition: |
               and(
                 succeeded(),

@@ -40,15 +40,14 @@ parameters:
   # acrPassword
 
 stages:
-
   # CD Stage
   - stage: Deploy
-    displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
+    displayName: "Deploy to Raspberry Pi (${{ parameters.appEnv }})"
     dependsOn:
       - ${{ if eq(parameters.appEnv, 'Production') }}:
-        - Migrate
+          - Migrate
       - ${{ else }}:
-        - Build
+          - Build
     condition: |
       and(
         succeeded(),
@@ -57,8 +56,8 @@ stages:
       )
     jobs:
       - deployment: DeployToPi
-        displayName: 'Pull & Run Container on Raspberry Pi'
-        environment: 'raspberry-pi'
+        displayName: "Pull & Run Container on Raspberry Pi"
+        environment: "raspberry-pi"
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -67,21 +66,20 @@ stages:
           runOnce:
             deploy:
               steps:
-
                 - script: |
                     docker login $(acrName) \
                       --username $(acrUsername) \
                       --password $(acrPassword)
-                  displayName: 'Authenticate Docker with ACR'
+                  displayName: "Authenticate Docker with ACR"
 
                 - script: |
                     docker pull $(acrName)/${{ parameters.imageName }}:latest
-                  displayName: 'Pull Latest Image from ACR'
+                  displayName: "Pull Latest Image from ACR"
 
                 - script: |
                     docker stop ${{ parameters.apiContainerName }} || true
                     docker rm   ${{ parameters.apiContainerName }} || true
-                  displayName: 'Remove Old Container'
+                  displayName: "Remove Old Container"
 
                 - script: |
                     docker run -d \
@@ -97,7 +95,7 @@ stages:
                       --health-retries 3 \
                       --health-start-period 30s \
                       $(acrName)/${{ parameters.imageName }}:latest
-                  displayName: 'Run New Container'
+                  displayName: "Run New Container"
 
                 - script: |
                     echo "Checking ${{ parameters.apiContainerName }} health status..."
@@ -106,7 +104,7 @@ stages:
                       sleep 5
                     done
                     echo "${{ parameters.apiContainerName }} is healthy!"
-                  displayName: 'Verify Container Health'
+                  displayName: "Verify Container Health"
 
                 - script: |
                     echo "Removing dangling images..."
@@ -120,7 +118,7 @@ stages:
                       xargs -I {} docker rmi $(acrName)/${{ parameters.imageName }}:{} 2>/dev/null || true
 
                     echo "Local cleanup complete!"
-                  displayName: 'Cleanup Old Local Images'
+                  displayName: "Cleanup Old Local Images"
 
                 - script: |
                     echo "Cleaning up old images in ACR..."
@@ -137,4 +135,4 @@ stages:
                         --yes 2>/dev/null || true
 
                     echo "ACR cleanup complete!"
-                  displayName: 'Cleanup Old ACR Images'
+                  displayName: "Cleanup Old ACR Images"
