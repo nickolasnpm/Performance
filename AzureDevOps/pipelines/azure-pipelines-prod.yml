@@ -36,6 +36,7 @@ stages:
       apiContainerName: 'performance-webapi-prod'
       dockerNetwork: 'performance-network-prod'
       imageName: 'performance'
+      keepImages: '5'
 
   # CD Stage
   - template: ../templates/deploy.yml
