@@ -34,6 +34,7 @@ stages:
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
+      serverName: ${{ parameters.serverName }}
       appEnv: 'Production'
       apiContainerName: 'performance-webapi-prod'
       dockerNetwork: 'performance-network-prod'
