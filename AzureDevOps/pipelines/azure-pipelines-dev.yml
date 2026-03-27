@@ -18,25 +18,22 @@ parameters:
     default: 'raspi4'
 
 stages:
-
-  # CI Stage 
+  # CI Stage
   - template: ../templates/build.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      imageName: 'performance'
-      serviceConnection: 'testregistryname'
+      imageName: "performance"
 
-  # CD Stage 
+  # CD Stage
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      appEnv: 'Development'
-      targetBranch: 'refs/heads/develop'
-      apiContainerName: 'performance-webapi-dev'
-      dockerNetwork: 'performance-network-dev'
-      apiPort: '8080'
-      acrShortName: 'testregistryname'
-      imageName: 'performance'
-      keepImages: '10'
+      appEnv: "Development"
+      targetBranch: "refs/heads/develop"
+      apiContainerName: "performance-webapi-dev"
+      dockerNetwork: "performance-network-dev"
+      apiPort: "8080"
+      imageName: "performance"
+      keepImages: "10"

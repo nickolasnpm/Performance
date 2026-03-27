@@ -26,9 +26,6 @@ parameters:
 
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
-  # acrName
-  # acrUsername
-  # acrPassword
 
 stages:
   # Migration Stage
@@ -52,16 +49,6 @@ stages:
             deploy:
               steps:
                 - script: |
-                    docker login $(acrName) \
-                      --username $(acrUsername) \
-                      --password $(acrPassword)
-                  displayName: "Authenticate Docker with ACR"
-
-                - script: |
-                    docker pull $(acrName)/${{ parameters.imageName }}:latest
-                  displayName: "Pull Latest Image from ACR"
-
-                - script: |
                     echo "Running EF Core migrations..."
 
                     docker run --rm \
@@ -70,7 +57,7 @@ stages:
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      $(acrName)/${{ parameters.imageName }}:latest
+                      ${{ parameters.imageName }}:latest
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then
@@ -86,11 +73,7 @@ stages:
                     echo "Removing migration container if still running or exited..."
                     docker rm -f ${{ parameters.apiContainerName }}-migration 2>/dev/null || true
                     echo "Migration container removed."
-
-                    echo "Removing pulled migration image..."
-                    docker rmi $(acrName)/${{ parameters.imageName }}:latest 2>/dev/null || true
-                    echo "Migration image removed."
-                  displayName: "Remove Migration Container & Image"
+                  displayName: "Remove Migration Container"
                   condition: always()
 
                 - script: |
@@ -98,11 +81,11 @@ stages:
                     docker image prune -f
 
                     echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
-                    docker images $(acrName)/${{ parameters.imageName }} --format "{{.Tag}}" | \
+                    docker images ${{ parameters.imageName }} --format "{{.Tag}}" | \
                       grep -v latest | \
                       sort -rn | \
                       tail -n +$((${{ parameters.keepImages }} + 1)) | \
-                      xargs -I {} docker rmi $(acrName)/${{ parameters.imageName }}:{} 2>/dev/null || true
+                      xargs -I {} docker rmi ${{ parameters.imageName }}:{} 2>/dev/null || true
 
                     echo "Local cleanup complete!"
                   displayName: "Cleanup Old Local Images"

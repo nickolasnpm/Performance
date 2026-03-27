@@ -24,9 +24,6 @@ parameters:
     type: string
 
   # Registry
-  - name: acrShortName
-    type: string
-
   - name: imageName
     type: string
 
@@ -35,9 +32,6 @@ parameters:
 
   # ── Secrets stored directly in Pipeline Variables (not declared here) ───────
   # DefaultConnection
-  # acrName
-  # acrUsername
-  # acrPassword
 
 stages:
   # CD Stage
@@ -67,16 +61,6 @@ stages:
             deploy:
               steps:
                 - script: |
-                    docker login $(acrName) \
-                      --username $(acrUsername) \
-                      --password $(acrPassword)
-                  displayName: "Authenticate Docker with ACR"
-
-                - script: |
-                    docker pull $(acrName)/${{ parameters.imageName }}:latest
-                  displayName: "Pull Latest Image from ACR"
-
-                - script: |
                     docker stop ${{ parameters.apiContainerName }} || true
                     docker rm   ${{ parameters.apiContainerName }} || true
                   displayName: "Remove Old Container"
@@ -94,7 +78,7 @@ stages:
                       --health-timeout 5s \
                       --health-retries 3 \
                       --health-start-period 30s \
-                      $(acrName)/${{ parameters.imageName }}:latest
+                      ${{ parameters.imageName }}:latest
                   displayName: "Run New Container"
 
                 - script: |
@@ -111,28 +95,11 @@ stages:
                     docker image prune -f
 
                     echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
-                    docker images $(acrName)/${{ parameters.imageName }} --format "{{.Tag}}" | \
+                    docker images ${{ parameters.imageName }} --format "{{.Tag}}" | \
                       grep -v latest | \
                       sort -rn | \
                       tail -n +$((${{ parameters.keepImages }} + 1)) | \
-                      xargs -I {} docker rmi $(acrName)/${{ parameters.imageName }}:{} 2>/dev/null || true
+                      xargs -I {} docker rmi ${{ parameters.imageName }}:{} 2>/dev/null || true
 
                     echo "Local cleanup complete!"
                   displayName: "Cleanup Old Local Images"
-
-                - script: |
-                    echo "Cleaning up old images in ACR..."
-                    az acr repository show-tags \
-                      --name ${{ parameters.acrShortName }} \
-                      --repository ${{ parameters.imageName }} \
-                      --orderby time_asc \
-                      --output tsv | \
-                      grep -v latest | \
-                      head -n -${{ parameters.keepImages }} | \
-                      xargs -I {} az acr repository delete \
-                        --name ${{ parameters.acrShortName }} \
-                        --image ${{ parameters.imageName }}:{} \
-                        --yes 2>/dev/null || true
-
-                    echo "ACR cleanup complete!"
-                  displayName: "Cleanup Old ACR Images"

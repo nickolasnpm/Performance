@@ -11,43 +11,40 @@ pr:
 parameters:
   - name: poolName
     type: string
-    default: 'Default'
+    default: "Default"
 
   - name: agentName
     type: string
-    default: 'raspi4'
+    default: "raspi4"
 
 stages:
-
   # CI Stage
   - template: ../templates/build.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      imageName: 'performance'
-      serviceConnection: 'testregistryname'
+      imageName: "performance"
 
   # Migrations Stage
   - template: ../templates/migrations.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      appEnv: 'Production'
-      apiContainerName: 'performance-webapi-prod'
-      dockerNetwork: 'performance-network-prod'
-      imageName: 'performance'
-      keepImages: '5'
+      appEnv: "Production"
+      apiContainerName: "performance-webapi-prod"
+      dockerNetwork: "performance-network-prod"
+      imageName: "performance"
+      keepImages: "5"
 
   # CD Stage
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      appEnv: 'Production'
-      targetBranch: 'refs/heads/master'
-      apiContainerName: 'performance-webapi-prod'
-      dockerNetwork: 'performance-network-prod'
-      apiPort: '8081'
-      acrShortName: 'testregistryname'
-      imageName: 'performance'
-      keepImages: '5'
+      appEnv: "Production"
+      targetBranch: "refs/heads/master"
+      apiContainerName: "performance-webapi-prod"
+      dockerNetwork: "performance-network-prod"
+      apiPort: "8081"
+      imageName: "performance"
+      keepImages: "5"
