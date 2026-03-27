@@ -16,6 +16,10 @@ parameters:
   - name: agentName
     type: string
     default: 'raspi4'
+  
+  - name: serverName
+    type: string
+    default: 'raspberry-pi'
 
 stages:
   # CI Stage
@@ -23,17 +27,18 @@ stages:
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      imageName: "performance"
+      imageName: 'performance'
 
   # CD Stage
   - template: ../templates/deploy.yml
     parameters:
       poolName: ${{ parameters.poolName }}
       agentName: ${{ parameters.agentName }}
-      appEnv: "Development"
-      targetBranch: "refs/heads/develop"
-      apiContainerName: "performance-webapi-dev"
-      dockerNetwork: "performance-network-dev"
-      apiPort: "8080"
-      imageName: "performance"
-      keepImages: "10"
+      serverName: ${{ parameters.serverName }}
+      appEnv: 'Development'
+      targetBranch: 'refs/heads/develop'
+      apiContainerName: 'performance-webapi-dev'
+      dockerNetwork: 'performance-network-dev'
+      apiPort: '8080'
+      imageName: 'performance'
+      keepImages: '10'

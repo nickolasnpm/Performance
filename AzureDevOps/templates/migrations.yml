@@ -7,6 +7,9 @@ parameters:
     type: string
 
   # Environment
+  - name: serverName
+    type: string
+
   - name: appEnv
     type: string
 
@@ -30,16 +33,18 @@ parameters:
 stages:
   # Migration Stage
   - stage: Migrate
-    displayName: "EF Core Migrations (${{ parameters.appEnv }})"
+    displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
+    dependsOn: Build
     condition: |
       and(
+        succeeded(),
         eq('${{ parameters.appEnv }}', 'Production'),
         ne(variables['Build.Reason'], 'PullRequest')
       )
     jobs:
       - deployment: RunMigrations
-        displayName: "Run EF Core Migrations on Raspberry Pi"
-        environment: "raspberry-pi"
+        displayName: 'Run EF Core Migrations on Raspberry Pi'
+        environment: ${{ parameters.serverName }}
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -49,7 +54,7 @@ stages:
             deploy:
               steps:
                 - script: |
-                    echo "Running EF Core migrations..."
+                    echo 'Running EF Core migrations...'
 
                     docker run --rm \
                       --stop-timeout 60 \
@@ -57,36 +62,36 @@ stages:
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      ${{ parameters.imageName }}:latest
+                      ${{ parameters.imageName }}-migration:latest
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then
-                      echo "##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment."
+                      echo '##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment.'
                       exit $MIGRATION_EXIT
                     fi
 
-                    echo "EF Core migrations applied successfully!"
-                  displayName: "Run EF Core Migrations"
+                    echo 'EF Core migrations applied successfully!'
+                  displayName: 'Run EF Core Migrations'
                   timeoutInMinutes: 10
 
                 - script: |
-                    echo "Removing migration container if still running or exited..."
+                    echo 'Removing migration container if still running or exited...'
                     docker rm -f ${{ parameters.apiContainerName }}-migration 2>/dev/null || true
-                    echo "Migration container removed."
-                  displayName: "Remove Migration Container"
+                    echo 'Migration container removed.'
+                  displayName: 'Remove Migration Container'
                   condition: always()
 
                 - script: |
-                    echo "Removing dangling images..."
+                    echo 'Removing dangling images...'
                     docker image prune -f
 
-                    echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
-                    docker images ${{ parameters.imageName }} --format "{{.Tag}}" | \
+                    echo 'Keeping only last ${{ parameters.keepImages }} images, removing older ones...'
+                    docker images ${{ parameters.imageName }}-migration --format "{{.Tag}}" | \
                       grep -v latest | \
                       sort -rn | \
                       tail -n +$((${{ parameters.keepImages }} + 1)) | \
-                      xargs -I {} docker rmi ${{ parameters.imageName }}:{} 2>/dev/null || true
+                      xargs -I {} docker rmi ${{ parameters.imageName }}-migration:{} 2>/dev/null || true
 
-                    echo "Local cleanup complete!"
-                  displayName: "Cleanup Old Local Images"
+                    echo 'Local cleanup complete!'
+                  displayName: 'Cleanup Old Local Migration Images'
                   condition: always()

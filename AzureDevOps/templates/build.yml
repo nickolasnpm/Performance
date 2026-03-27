@@ -13,26 +13,38 @@ parameters:
 stages:
   # CI Stage
   - stage: Build
-    displayName: "Build Docker Image"
+    displayName: 'Build Docker Images'
     variables:
-      imageTag: "$(Build.BuildId)"
-      rootPath: "$(Build.SourcesDirectory)"
-      dockerfilePath: "$(Build.SourcesDirectory)/Performance/Dockerfile"
+      imageTag: '$(Build.BuildId)'
+      rootPath: '$(Build.SourcesDirectory)'
+      dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
     jobs:
       - job: BuildImage
-        displayName: "Build Docker Image"
+        displayName: 'Build Docker Images'
         pool:
           name: ${{ parameters.poolName }}
           demands:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
           - task: Docker@2
-            displayName: "Build Docker Image"
+            displayName: 'Build Deployment Image'
             inputs:
               command: build
               repository: ${{ parameters.imageName }}
-              dockerfile: "$(dockerfilePath)"
-              buildContext: "$(rootPath)"
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(rootPath)'
+              tags: |
+                $(imageTag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Build Migration Image'
+            inputs:
+              command: build
+              repository: ${{ parameters.imageName }}-migration
+              dockerfile: '$(dockerfilePath)'
+              buildContext: '$(rootPath)'
+              arguments: '--target migrate'
               tags: |
                 $(imageTag)
                 latest

@@ -7,6 +7,9 @@ parameters:
     type: string
 
   # Environment
+  - name: serverName
+    type: string
+
   - name: appEnv
     type: string
 
@@ -36,7 +39,7 @@ parameters:
 stages:
   # CD Stage
   - stage: Deploy
-    displayName: "Deploy to Raspberry Pi (${{ parameters.appEnv }})"
+    displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
     dependsOn:
       - ${{ if eq(parameters.appEnv, 'Production') }}:
           - Migrate
@@ -50,8 +53,8 @@ stages:
       )
     jobs:
       - deployment: DeployToPi
-        displayName: "Pull & Run Container on Raspberry Pi"
-        environment: "raspberry-pi"
+        displayName: 'Pull & Run Container on Raspberry Pi'
+        environment: ${{ parameters.serverName }}
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -63,7 +66,7 @@ stages:
                 - script: |
                     docker stop ${{ parameters.apiContainerName }} || true
                     docker rm   ${{ parameters.apiContainerName }} || true
-                  displayName: "Remove Old Container"
+                  displayName: 'Remove Old Container'
 
                 - script: |
                     docker run -d \
@@ -79,27 +82,27 @@ stages:
                       --health-retries 3 \
                       --health-start-period 30s \
                       ${{ parameters.imageName }}:latest
-                  displayName: "Run New Container"
+                  displayName: 'Run New Container'
 
                 - script: |
-                    echo "Checking ${{ parameters.apiContainerName }} health status..."
+                    echo 'Checking ${{ parameters.apiContainerName }} health status...'
                     until [ "$(docker inspect --format '{{.State.Health.Status}}' ${{ parameters.apiContainerName }})" = "healthy" ]; do
-                      echo "${{ parameters.apiContainerName }} not healthy yet, retrying in 5s..."
+                      echo '${{ parameters.apiContainerName }} not healthy yet, retrying in 5s...'
                       sleep 5
                     done
-                    echo "${{ parameters.apiContainerName }} is healthy!"
-                  displayName: "Verify Container Health"
+                    echo '${{ parameters.apiContainerName }} is healthy!'
+                  displayName: 'Verify Container Health'
 
                 - script: |
-                    echo "Removing dangling images..."
+                    echo 'Removing dangling images...'
                     docker image prune -f
 
-                    echo "Keeping only last ${{ parameters.keepImages }} images, removing older ones..."
+                    echo 'Keeping only last ${{ parameters.keepImages }} images, removing older ones...'
                     docker images ${{ parameters.imageName }} --format "{{.Tag}}" | \
                       grep -v latest | \
                       sort -rn | \
                       tail -n +$((${{ parameters.keepImages }} + 1)) | \
                       xargs -I {} docker rmi ${{ parameters.imageName }}:{} 2>/dev/null || true
 
-                    echo "Local cleanup complete!"
-                  displayName: "Cleanup Old Local Images"
+                    echo 'Local cleanup complete!'
+                  displayName: 'Cleanup Old Local Images'
