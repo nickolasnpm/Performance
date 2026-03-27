@@ -23,7 +23,7 @@ RUN dotnet publish "./Performance.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 FROM build AS migrate
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
-ENTRYPOINT ["dotnet-ef", "database", "update", "--no-build", "--verbose", "--project", "Performance.csproj"]
+ENTRYPOINT ["dotnet-ef", "database", "update", "--no-build", "--configuration", "Release", "--verbose", "--project", "Performance.csproj"]
 
 # Final stage
 FROM base AS final
