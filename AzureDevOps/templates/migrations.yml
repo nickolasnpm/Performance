@@ -66,7 +66,7 @@ stages:
 
                     MIGRATION_EXIT=$?
                     if [ $MIGRATION_EXIT -ne 0 ]; then
-                      echo '##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment.'
+                      echo "##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment."
                       exit $MIGRATION_EXIT
                     fi
 
