@@ -18,6 +18,13 @@ stages:
       imageTag: '$(Build.BuildId)'
       rootPath: '$(Build.SourcesDirectory)'
       dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+      unitTestPath: "$(Build.SourcesDirectory)/UnitTest"
+      integrationTestPath: "$(Build.SourcesDirectory)/IntegrationTest"
+      testResultsPath: "$(Agent.TempDirectory)/TestResults"
+      unitTestResultsFile: "$(Agent.TempDirectory)/TestResults/unit-test-results.trx"
+      unitCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/unit-coverage.xml"
+      integrationTestResultsFile: "$(Agent.TempDirectory)/TestResults/integration-test-results.trx"
+      integrationCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/integration-coverage.xml"
     jobs:
       - job: RunUnitTests
         displayName: 'Run Unit Tests'
