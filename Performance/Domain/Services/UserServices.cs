@@ -54,7 +54,7 @@ namespace Performance.Domain.Services
 
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = users.MapToDTO(UserMapper.ToDTO),
+                Data = users.MapEntityToDTO(UserMapper.ToDTO),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -92,7 +92,7 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.MapToDTO(UserMapper.ToDTO),
+                Data = result.MapEntityToDTO(UserMapper.ToDTO),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,

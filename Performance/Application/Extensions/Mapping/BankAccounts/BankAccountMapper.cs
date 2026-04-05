@@ -13,7 +13,7 @@ namespace Performance.Application.Extensions.Mapping.BankAccounts
             CurrentBalance = bankAccount.CurrentBalance,
             AvailableBalance = bankAccount.AvailableBalance,
             UserId = bankAccount.UserId,
-            Transactions = bankAccount.Transactions?.MapToDTO(BankTransactionMapper.ToDTO) ?? null
+            Transactions = bankAccount.Transactions?.MapEntityToDTO(BankTransactionMapper.ToDTO) ?? null
         };
     }
 }

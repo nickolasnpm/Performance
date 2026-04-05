@@ -24,12 +24,12 @@ namespace Performance.Application.Extensions.Mapping.Users
             IsEmailVerified = user.IsEmailVerified,
             IsActive = user.IsActive,
             LastLoginAt = user.LastLoginAt,
-            Address = user.Address?.MapToDTO(AddressMapper.ToDTO) ?? null,
-            Roles = user.Roles?.MapToDTO(RoleMapper.ToDTO).ToList() ?? null,
-            BankAccount = user.BankAccount?.MapToDTO(BankAccountMapper.ToDTO) ?? null,
-            CreditCards = user.CreditCards?.MapToDTO(CreditCardMapper.ToDTO) ?? null,
-            Loans = user.Loans?.MapToDTO(LoanMapper.ToDTO).ToList() ?? null,
-            SupportTickets = user.SupportTickets?.MapToDTO(SupportTicketMapper.ToDTO) ?? null
+            Address = user.Address?.MapEntityToDTO(AddressMapper.ToDTO) ?? null,
+            Roles = user.Roles?.MapEntityToDTO(RoleMapper.ToDTO).ToList() ?? null,
+            BankAccount = user.BankAccount?.MapEntityToDTO(BankAccountMapper.ToDTO) ?? null,
+            CreditCards = user.CreditCards?.MapEntityToDTO(CreditCardMapper.ToDTO) ?? null,
+            Loans = user.Loans?.MapEntityToDTO(LoanMapper.ToDTO).ToList() ?? null,
+            SupportTickets = user.SupportTickets?.MapEntityToDTO(SupportTicketMapper.ToDTO) ?? null
         };
     }
 }

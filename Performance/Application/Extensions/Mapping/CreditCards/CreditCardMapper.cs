@@ -18,7 +18,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
             IsDefault = creditCard.IsDefault,
             CreditLimit = creditCard.CreditLimit,
             UserId = creditCard.UserId,
-            Statements = creditCard.Statements?.MapToDTO(CreditCardStatementMapper.ToDTO) ?? null
+            Statements = creditCard.Statements?.MapEntityToDTO(CreditCardStatementMapper.ToDTO) ?? null
         };
     }
 }
