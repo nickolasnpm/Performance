@@ -8,6 +8,7 @@ EXPOSE 8080
 FROM --platform=linux/arm64 mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Directory.Packages.props", "."]
 COPY ["Performance/Performance.csproj", "Performance/"]
 RUN dotnet restore "./Performance/Performance.csproj"
 COPY . .
