@@ -145,7 +145,7 @@ stages:
                 latest
 
       - job: SecurityScan
-        displayName: 'Security Scan (MSDO)'
+        displayName: 'Security Scan'
         dependsOn:
           - RunIntegrationTests
           - BuildImage
@@ -156,14 +156,54 @@ stages:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
 
-          - task: MicrosoftSecurityDevOps@1
-            displayName: 'Run Microsoft Security DevOps'
-            inputs:
-              categories: 'secrets,code,IaC,containers'
+          - script: |
+              # Semgrep (SAST)
+              pip3 install semgrep --break-system-packages
+
+              # Trivy (Vuln + Container + IaC)
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+                | sh -s -- -b /usr/local/bin
+
+              # Gitleaks (Secrets)
+              curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_arm64.tar.gz \
+                | tar -xz -C /usr/local/bin gitleaks
+
+              mkdir -p "$(Agent.TempDirectory)/sarif"
+            displayName: 'Install Security Tools'
+
+          - script: |
+              semgrep scan \
+                --config=auto \
+                --sarif \
+                --output "$(Agent.TempDirectory)/sarif/semgrep.sarif" \
+                "$(Build.SourcesDirectory)" \
+                || true
+            displayName: 'Semgrep - SAST Code Vulnerability Scan'
+
+          - script: |
+              gitleaks detect \
+                --source "$(Build.SourcesDirectory)" \
+                --report-format sarif \
+                --report-path "$(Agent.TempDirectory)/sarif/gitleaks.sarif" \
+                --exit-code 0
+            displayName: 'Gitleaks - Secret Scan'
+
+          - script: |
+              trivy fs "$(Build.SourcesDirectory)" \
+                --scanners vuln,secret,misconfig \
+                --format sarif \
+                --output "$(Agent.TempDirectory)/sarif/trivy-fs.sarif" \
+                --exit-code 0
+
+              trivy image ${{ parameters.imageName }}:latest \
+                --format sarif \
+                --output "$(Agent.TempDirectory)/sarif/trivy-image.sarif" \
+                --exit-code 0
+            displayName: 'Trivy - Container & Dependency Vulnerability Scan'
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
             condition: always()
             inputs:
-              pathToPublish: '$(Agent.TempDirectory)/.sarif'
+              pathToPublish: '$(Agent.TempDirectory)/sarif'
               artifactName: 'CodeAnalysisLogs'

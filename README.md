@@ -34,6 +34,8 @@ This project follows a monolith architecture for development speed and simplicit
   - Unit Tests (xUnit)
   - Integration Tests (with database fixtures)
   - Performance Benchmarks (BenchmarkDotNet)
+- **Security**:
+  - Pipeline security scanning using built-in Microsoft Security DevOps
 - **Build Tools**: MSBuild, NuGet for package management
 
 ## F. Getting Started
