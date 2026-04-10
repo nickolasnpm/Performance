@@ -143,3 +143,27 @@ stages:
               tags: |
                 $(imageTag)
                 latest
+
+      - job: SecurityScan
+        displayName: 'Security Scan (MSDO)'
+        dependsOn:
+          - RunIntegrationTests
+          - BuildImage
+        condition: succeeded()
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+
+          - task: MicrosoftSecurityDevOps@1
+            displayName: 'Run Microsoft Security DevOps'
+            inputs:
+              categories: 'secrets,code,IaC,containers'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Security Scan Results'
+            condition: always()
+            inputs:
+              pathToPublish: '$(Agent.TempDirectory)/.sarif'
+              artifactName: 'CodeAnalysisLogs'
