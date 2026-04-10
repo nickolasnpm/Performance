@@ -45,6 +45,7 @@ stages:
             displayName: 'Restore Unit Test Dependencies'
 
           - script: |
+              mkdir -p "$(testResultsPath)"
               dotnet test "$(unitTestPath)" \
                 --configuration Release \
                 --logger "trx;LogFileName=unit-test-results.trx" \
@@ -61,11 +62,30 @@ stages:
               testResultsFiles: '$(unitTestResultsFile)'
               failTaskOnFailedTests: true
 
-          - task: PublishCodeCoverageResults@2
+          - script: |
+              export PATH="$PATH:$HOME/.dotnet/tools"
+
+              # Check if reportgenerator is already installed
+              if ! command -v reportgenerator &> /dev/null; then
+                echo "reportgenerator not found, installing..."
+                dotnet tool install -g dotnet-reportgenerator-globaltool
+              else
+                echo "reportgenerator already installed: $(reportgenerator --version)"
+              fi
+
+              reportgenerator \
+                -reports:"$(testResultsPath)/**/coverage.cobertura.xml" \
+                -targetdir:"$(testResultsPath)/UnitCoverageReport" \
+                -reporttypes:"HtmlInline;Cobertura"
+            displayName: 'Generate Unit Test Coverage Report'
+            condition: always()
+
+          - task: PublishBuildArtifacts@1
             displayName: 'Publish Unit Test Coverage'
             condition: always()
             inputs:
-              summaryFileLocation: '$(testResultsPath)/**/coverage.cobertura.xml'
+              pathToPublish: '$(testResultsPath)/UnitCoverageReport'
+              artifactName: 'UnitTestCoverageReport'
 
       - job: RunIntegrationTests
         displayName: 'Run Integration Tests'
@@ -88,6 +108,7 @@ stages:
             displayName: 'Restore Integration Test Dependencies'
 
           - script: |
+              mkdir -p "$(testResultsPath)"
               dotnet test "$(integrationTestPath)" \
                 --configuration Release \
                 --logger "trx;LogFileName=integration-test-results.trx" \
@@ -104,11 +125,30 @@ stages:
               testResultsFiles: '$(integrationTestResultsFile)'
               failTaskOnFailedTests: true
 
-          - task: PublishCodeCoverageResults@2
+          - script: |
+              export PATH="$PATH:$HOME/.dotnet/tools"
+
+              # Check if reportgenerator is already installed
+              if ! command -v reportgenerator &> /dev/null; then
+                echo "reportgenerator not found, installing..."
+                dotnet tool install -g dotnet-reportgenerator-globaltool
+              else
+                echo "reportgenerator already installed: $(reportgenerator --version)"
+              fi
+
+              reportgenerator \
+                -reports:"$(testResultsPath)/**/coverage.cobertura.xml" \
+                -targetdir:"$(testResultsPath)/IntegrationCoverageReport" \
+                -reporttypes:"HtmlInline;Cobertura"
+            displayName: 'Generate Integration Test Coverage Report'
+            condition: always()
+
+          - task: PublishBuildArtifacts@1
             displayName: 'Publish Integration Test Coverage'
             condition: always()
             inputs:
-              summaryFileLocation: '$(testResultsPath)/**/coverage.cobertura.xml'
+              pathToPublish: '$(testResultsPath)/IntegrationCoverageReport'
+              artifactName: 'IntegrationTestCoverageReport'
 
       - job: BuildImage
         displayName: 'Build Docker Images'
@@ -119,6 +159,7 @@ stages:
           demands:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
+
           - task: Docker@2
             displayName: 'Build Deployment Image'
             inputs:
@@ -142,6 +183,7 @@ stages:
                 $(imageTag)
                 latest
 
+      # 🔒 Security Scan Job
       - job: SecurityScan
         displayName: 'Security Scan (Snyk)'
         dependsOn:
@@ -154,10 +196,12 @@ stages:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
 
+          # Create output directory
           - script: |
               mkdir -p "$(Agent.TempDirectory)/sarif"
             displayName: 'Create Output Directory'
 
+          # Scan NuGet dependencies for known CVEs
           - script: |
               snyk test \
                 --file="$(Build.SourcesDirectory)" \
@@ -167,6 +211,7 @@ stages:
             env:
               SnykToken: $(SnykToken)
 
+          # Scan C# code for vulnerabilities (SAST)
           - script: |
               snyk code test \
                 "$(Build.SourcesDirectory)" \
@@ -176,6 +221,7 @@ stages:
             env:
               SnykToken: $(SnykToken)
 
+          # Scan Docker image for vulnerabilities
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
                 --file="$(dockerfilePath)" \
@@ -185,6 +231,7 @@ stages:
             env:
               SnykToken: $(SnykToken)
 
+          # Publish all SARIF results as artifact
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
             condition: always()
