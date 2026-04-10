@@ -35,7 +35,7 @@ This project follows a monolith architecture for development speed and simplicit
   - Integration Tests (with database fixtures)
   - Performance Benchmarks (BenchmarkDotNet)
 - **Security**:
-  - Pipeline security scanning using built-in Microsoft Security DevOps
+  - Pipeline security scanning using Snyk
 - **Build Tools**: MSBuild, NuGet for package management
 
 ## F. Getting Started
