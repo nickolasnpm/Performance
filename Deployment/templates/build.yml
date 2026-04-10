@@ -49,9 +49,8 @@ stages:
                 --configuration Release \
                 --logger "trx;LogFileName=unit-test-results.trx" \
                 --results-directory "$(testResultsPath)" \
-                /p:CollectCoverage=true \
-                /p:CoverletOutputFormat=cobertura \
-                /p:CoverletOutput="$(unitCoverageResultsFile)"
+                --collect:"XPlat Code Coverage" \
+                -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
             displayName: 'Run Unit Tests'
 
           - task: PublishTestResults@2
@@ -66,7 +65,7 @@ stages:
             displayName: 'Publish Unit Test Coverage'
             condition: always()
             inputs:
-              summaryFileLocation: '$(unitCoverageResultsFile)'
+              summaryFileLocation: '$(testResultsPath)/**/coverage.cobertura.xml'
 
       - job: RunIntegrationTests
         displayName: 'Run Integration Tests'
@@ -93,9 +92,8 @@ stages:
                 --configuration Release \
                 --logger "trx;LogFileName=integration-test-results.trx" \
                 --results-directory "$(testResultsPath)" \
-                /p:CollectCoverage=true \
-                /p:CoverletOutputFormat=cobertura \
-                /p:CoverletOutput="$(integrationCoverageResultsFile)"
+                --collect:"XPlat Code Coverage" \
+                -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
             displayName: 'Run Integration Tests'
 
           - task: PublishTestResults@2
@@ -110,7 +108,7 @@ stages:
             displayName: 'Publish Integration Test Coverage'
             condition: always()
             inputs:
-              summaryFileLocation: '$(integrationCoverageResultsFile)'
+              summaryFileLocation: '$(testResultsPath)/**/coverage.cobertura.xml'
 
       - job: BuildImage
         displayName: 'Build Docker Images'
@@ -145,7 +143,7 @@ stages:
                 latest
 
       - job: SecurityScan
-        displayName: 'Security Scan'
+        displayName: 'Security Scan (Snyk)'
         dependsOn:
           - RunIntegrationTests
           - BuildImage
@@ -157,49 +155,35 @@ stages:
         steps:
 
           - script: |
-              # Semgrep (SAST)
-              pip3 install semgrep --break-system-packages
-
-              # Trivy (Vuln + Container + IaC)
-              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-                | sh -s -- -b /usr/local/bin
-
-              # Gitleaks (Secrets)
-              curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_arm64.tar.gz \
-                | tar -xz -C /usr/local/bin gitleaks
-
               mkdir -p "$(Agent.TempDirectory)/sarif"
-            displayName: 'Install Security Tools'
+            displayName: 'Create Output Directory'
 
           - script: |
-              semgrep scan \
-                --config=auto \
-                --sarif \
-                --output "$(Agent.TempDirectory)/sarif/semgrep.sarif" \
-                "$(Build.SourcesDirectory)" \
+              snyk test \
+                --file="$(Build.SourcesDirectory)" \
+                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-deps.sarif" \
                 || true
-            displayName: 'Semgrep - SAST Code Vulnerability Scan'
+            displayName: 'Snyk - NuGet Dependency Scan'
+            env:
+              SnykToken: $(SnykToken)
 
           - script: |
-              gitleaks detect \
-                --source "$(Build.SourcesDirectory)" \
-                --report-format sarif \
-                --report-path "$(Agent.TempDirectory)/sarif/gitleaks.sarif" \
-                --exit-code 0
-            displayName: 'Gitleaks - Secret Scan'
+              snyk code test \
+                "$(Build.SourcesDirectory)" \
+                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-code.sarif" \
+                || true
+            displayName: 'Snyk - C# Code Scan (SAST)'
+            env:
+              SnykToken: $(SnykToken)
 
           - script: |
-              trivy fs "$(Build.SourcesDirectory)" \
-                --scanners vuln,secret,misconfig \
-                --format sarif \
-                --output "$(Agent.TempDirectory)/sarif/trivy-fs.sarif" \
-                --exit-code 0
-
-              trivy image ${{ parameters.imageName }}:latest \
-                --format sarif \
-                --output "$(Agent.TempDirectory)/sarif/trivy-image.sarif" \
-                --exit-code 0
-            displayName: 'Trivy - Container & Dependency Vulnerability Scan'
+              snyk container test ${{ parameters.imageName }}:latest \
+                --file="$(dockerfilePath)" \
+                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-container.sarif" \
+                || true
+            displayName: 'Snyk - Docker Image Scan'
+            env:
+              SnykToken: $(SnykToken)
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
