@@ -1,19 +1,26 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Diagnostics.Tracing.StackSources;
+using Microsoft.EntityFrameworkCore;
+using Performance.Application.Common.Enums;
+using Performance.Application.Common.Models;
+using Performance.Application.DTOs.Users;
+using Performance.Application.Extensions.Mapping;
+using Performance.Application.Extensions.Mapping.Users;
+using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Domain.Entity;
-using Performance.Application.DTOs.Users;
-using Performance.Application.Common.Enums;
-using Performance.Application.Extensions.Mapping.Users;
-using Microsoft.AspNetCore.Identity;
-using Performance.Application.Extensions.Mapping;
+using Performance.Infrastructure;
 
 namespace Performance.Domain.Services
 {
     public class UserServices (IUnitOfWork unitOfWork)
         : IUserServices
     {
+        private const int MaxBatchSize = 500;
+        private readonly string MaxBatchSizeErrorResponse = $"Batch size cannot exceed {MaxBatchSize}";
+
         public IQueryable<User> GetAllAsync()
         {
             return unitOfWork.UserRepository.GetAll();
@@ -40,6 +47,94 @@ namespace Performance.Domain.Services
             }
         }
 
+        public async Task<User?> GetByIdAsync(long Id)
+        {
+            return await GetAllAsync().FirstOrDefaultAsync(u => u.Id == Id);
+        }
+
+        public async Task<Result<bool, List<AddErrorResponseDTO>>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
+        {
+            if (requestDTOs.Count > MaxBatchSize)
+                throw new ArgumentException(MaxBatchSizeErrorResponse);
+
+            var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
+            var requestedEmails = requestDTOs.Select(u => u.Email).ToHashSet();
+
+            var existingUsers = await GetAllAsync()
+                .Where(u => requestedUsernames.Contains(u.Username) || requestedEmails.Contains(u.Email))
+                .Select(u => new { u.Username, u.Email })
+                .ToListAsync();
+
+            var existingUsernames = existingUsers.Select(u => u.Username).ToHashSet();
+            var existingEmails = existingUsers.Select(u => u.Email).ToHashSet();
+
+            var errors = requestDTOs
+                .Select(u => new AddErrorResponseDTO
+                {
+                    Username = u.Username,
+                    Email = u.Email,
+                    IsUsernameExist = existingUsernames.Contains(u.Username),
+                    IsEmailExist = existingEmails.Contains(u.Email)
+                })
+                .Where(e => e.IsUsernameExist || e.IsEmailExist)
+                .ToList();
+
+            if (errors.Any())
+                return Result<bool, List<AddErrorResponseDTO>>.Failure(errors);
+
+            var toBeCreated = requestDTOs.MapDtoToEntity(UserMapper.AddRequestToEntity);
+            await unitOfWork.UserRepository.Create(toBeCreated);
+            await unitOfWork.SaveChangesAsync();
+
+            return Result<bool, List<AddErrorResponseDTO>>.Success(true);
+        }
+
+        public async Task<Result<bool, List<long>>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs)
+        {
+            if (requestDTOs.Count > MaxBatchSize)
+                throw new ArgumentException(MaxBatchSizeErrorResponse);
+
+            HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
+
+            var existingUsers = await GetAllAsync()
+                .Where(u => entityIds.Contains(u.Id))
+                .ToListAsync();
+
+            var existingIds = existingUsers.Select(u => u.Id).ToHashSet();
+            var notfoundIds = entityIds.Except(existingIds).ToList();
+
+            if (notfoundIds.Any())
+                return Result<bool, List<long>>.Failure(notfoundIds);
+
+            var existingUsersById = existingUsers.ToDictionary(u => u.Id);
+            var updatedUsers = requestDTOs.MapDtoToEntity(dto => UserMapper.UpdateRequestToEntity(dto, existingUsersById[dto.Id]));
+
+            await unitOfWork.UserRepository.Update(updatedUsers);
+            await unitOfWork.SaveChangesAsync();
+
+            return Result<bool, List<long>>.Success(true);
+        }
+
+        public async Task<Result<bool, List<long>>> DeleteUsers(HashSet<long> ids)
+        {
+            if (ids.Count > MaxBatchSize)
+                throw new ArgumentException(MaxBatchSizeErrorResponse);
+
+            var existingIds = await GetAllAsync()
+                .Where(u => ids.Contains(u.Id))
+                .Select(u => u.Id).ToHashSetAsync();
+
+            var notfoundids = ids.Except(existingIds).ToList();
+
+            if (notfoundids.Any())
+                return Result<bool, List<long>>.Failure(notfoundids);
+
+            await unitOfWork.UserRepository.Delete(existingIds);
+
+            return Result<bool, List<long>>.Success(true);
+        }
+
+        #region private methods
         private async Task<OffsetPaginationResponse<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
@@ -54,7 +149,7 @@ namespace Performance.Domain.Services
 
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = users.MapEntityToDTO(UserMapper.ToDTO),
+                Data = users.MapEntityToDTO(UserMapper.EntityToDTO),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -92,11 +187,12 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.MapEntityToDTO(UserMapper.ToDTO),
+                Data = result.MapEntityToDTO(UserMapper.EntityToDTO),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,
             };
         }
+        #endregion
     }
 }

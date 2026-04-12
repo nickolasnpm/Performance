@@ -7,5 +7,6 @@
     {
         IQueryable<TEntity> GetAllAsync();
         Task<TResponse> GetPaginatedListAsync(TRequest request);
+        Task<TEntity?> GetByIdAsync(long Id);
     }
 }

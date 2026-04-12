@@ -11,7 +11,7 @@ namespace Performance.Application.Extensions.Mapping.Users
 {
     public static class UserMapper
     {
-        public static UserDTO ToDTO(User user) => new()
+        public static UserDTO EntityToDTO(User user) => new()
         {
             Id = user.Id,
             Username = user.Username,
@@ -30,6 +30,40 @@ namespace Performance.Application.Extensions.Mapping.Users
             CreditCards = user.CreditCards?.MapEntityToDTO(CreditCardMapper.ToDTO) ?? null,
             Loans = user.Loans?.MapEntityToDTO(LoanMapper.ToDTO).ToList() ?? null,
             SupportTickets = user.SupportTickets?.MapEntityToDTO(SupportTicketMapper.ToDTO) ?? null
+        };
+
+        public static User AddRequestToEntity(AddUserRequestDTO request) => new()
+        {
+            Username = request.Username,
+            Email = request.Email,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            DateOfBirth = request.DateOfBirth,
+            PhoneNumber = request.PhoneNumber,
+            ProfilePictureUrl = request.ProfilePictureUrl,
+            CreatedAt = DateTimeOffset.Now,
+            CreatedBy = "system",
+            UpdatedAt = DateTimeOffset.Now,
+            UpdatedBy = "system"
+        };
+
+        public static User UpdateRequestToEntity(UpdateUserRequestDTO request, User existingUser) => new()
+        {
+            Id = existingUser.Id,
+            Username = existingUser.Username,
+            Email = existingUser.Email,
+            FirstName = request.FirstName ?? existingUser.FirstName,
+            LastName = request.LastName ?? existingUser.LastName,
+            DateOfBirth = request.DateOfBirth ?? existingUser.DateOfBirth,
+            PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber,
+            ProfilePictureUrl = request.ProfilePictureUrl ?? existingUser.ProfilePictureUrl,
+            IsEmailVerified = existingUser.IsEmailVerified,
+            IsActive = existingUser.IsActive,
+            LastLoginAt = existingUser.LastLoginAt,
+            CreatedAt = existingUser.CreatedAt,
+            CreatedBy = existingUser.CreatedBy,
+            UpdatedAt = DateTimeOffset.Now,
+            UpdatedBy = "system"
         };
     }
 }

@@ -87,5 +87,23 @@ namespace Performance.Infrastructure.Repositories
                 Items: queryable.Take(request.PageSize + 1), 
                 TotalCount: totalCount);
         }
+
+        public async Task<List<User>> Create(List<User> entities)
+        {
+            await userDbContext.AddRangeAsync(entities);
+            return entities;
+        }
+
+        public Task<List<User>> Update(List<User> entities)
+        {
+            userDbContext.UpdateRange(entities);
+            return Task.FromResult(entities);
+        }
+
+        public async Task<bool> Delete(HashSet<long> ids)
+        {
+            await userDbContext.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();
+            return true;
+        }
     }
 }
