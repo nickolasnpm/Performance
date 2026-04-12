@@ -2,28 +2,35 @@ namespace Performance.Application.Extensions.Mapping
 {
     public static class MapperExtensions
     {
-        extension<TSource, TDto>(TSource source) 
+        extension<TSource, TTarget>(TSource source) 
             where TSource : class 
-            where TDto : class
+            where TTarget : class
         {
-            public TDto MapEntityToDTO(Func<TSource, TDto> mapper)
+            // get single
+            public TTarget MapEntityToDTO(Func<TSource, TTarget> mapper)
                 => mapper(source);
         }
 
-        extension<TSource, TDto>(IEnumerable<TSource> source) 
+        extension<TSource, TTarget>(IEnumerable<TSource> source) 
             where TSource : class 
-            where TDto : class
+            where TTarget : class
         {
-            public List<TDto> MapEntityToDTO(Func<TSource, TDto> mapper)
+            // get list
+            public List<TTarget> MapEntityToDTO(Func<TSource, TTarget> mapper)
+                => source.Select(mapper).ToList();
+
+            // create bulk
+            public List<TTarget> MapDTOToEntity(Func<TSource, TTarget> mapper)
                 => source.Select(mapper).ToList();
         }
 
-        extension<TDto, TEntity>(List<TDto> dto) 
-            where TDto : class 
-            where TEntity : class
+        extension<TSource, TExisting>(List<TSource> dto)
+            where TSource : class
+            where TExisting : class
         {
-            public List<TEntity> MapDtoToEntity(Func<TDto, TEntity> mapper)
-                => dto.Select(mapper).ToList();
+            // update bulk
+            public void MapDTOToEntity(Func<TSource, TExisting> keySelector, Action<TSource, TExisting> mapper)
+                => dto.ForEach(d => mapper(d, keySelector(d)));
         }
     }
 }

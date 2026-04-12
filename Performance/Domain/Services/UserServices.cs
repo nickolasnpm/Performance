@@ -82,7 +82,7 @@ namespace Performance.Domain.Services
             if (errors.Any())
                 return Result<bool, List<AddErrorResponseDTO>>.Failure(errors);
 
-            var toBeCreated = requestDTOs.MapDtoToEntity(UserMapper.AddRequestToEntity);
+            var toBeCreated = requestDTOs.MapDTOToEntity(UserMapper.AddRequestToEntity);
             await unitOfWork.UserRepository.Create(toBeCreated);
             await unitOfWork.SaveChangesAsync();
 
@@ -97,6 +97,7 @@ namespace Performance.Domain.Services
             HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
             var existingUsers = await GetAllAsync()
+                .AsTracking()
                 .Where(u => entityIds.Contains(u.Id))
                 .ToListAsync();
 
@@ -107,9 +108,8 @@ namespace Performance.Domain.Services
                 return Result<bool, List<long>>.Failure(notfoundIds);
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);
-            var updatedUsers = requestDTOs.MapDtoToEntity(dto => UserMapper.UpdateRequestToEntity(dto, existingUsersById[dto.Id]));
+            requestDTOs.MapDTOToEntity(dto => existingUsersById[dto.Id], UserMapper.UpdateRequestToEntity);
 
-            await unitOfWork.UserRepository.Update(updatedUsers);
             await unitOfWork.SaveChangesAsync();
 
             return Result<bool, List<long>>.Success(true);

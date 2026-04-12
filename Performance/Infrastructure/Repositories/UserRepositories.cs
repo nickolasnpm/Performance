@@ -94,12 +94,6 @@ namespace Performance.Infrastructure.Repositories
             return entities;
         }
 
-        public Task<List<User>> Update(List<User> entities)
-        {
-            userDbContext.UpdateRange(entities);
-            return Task.FromResult(entities);
-        }
-
         public async Task<bool> Delete(HashSet<long> ids)
         {
             await userDbContext.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();

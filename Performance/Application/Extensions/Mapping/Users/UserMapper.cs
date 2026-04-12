@@ -47,23 +47,15 @@ namespace Performance.Application.Extensions.Mapping.Users
             UpdatedBy = "system"
         };
 
-        public static User UpdateRequestToEntity(UpdateUserRequestDTO request, User existingUser) => new()
+        public static void UpdateRequestToEntity(UpdateUserRequestDTO request, User existingUser)
         {
-            Id = existingUser.Id,
-            Username = existingUser.Username,
-            Email = existingUser.Email,
-            FirstName = request.FirstName ?? existingUser.FirstName,
-            LastName = request.LastName ?? existingUser.LastName,
-            DateOfBirth = request.DateOfBirth ?? existingUser.DateOfBirth,
-            PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber,
-            ProfilePictureUrl = request.ProfilePictureUrl ?? existingUser.ProfilePictureUrl,
-            IsEmailVerified = existingUser.IsEmailVerified,
-            IsActive = existingUser.IsActive,
-            LastLoginAt = existingUser.LastLoginAt,
-            CreatedAt = existingUser.CreatedAt,
-            CreatedBy = existingUser.CreatedBy,
-            UpdatedAt = DateTimeOffset.Now,
-            UpdatedBy = "system"
-        };
+            existingUser.FirstName = request.FirstName ?? existingUser.FirstName;
+            existingUser.LastName = request.LastName ?? existingUser.LastName;
+            existingUser.DateOfBirth = request.DateOfBirth ?? existingUser.DateOfBirth;
+            existingUser.PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber;
+            existingUser.ProfilePictureUrl = request.ProfilePictureUrl ?? existingUser.ProfilePictureUrl;
+            existingUser.UpdatedAt = DateTimeOffset.Now;
+            existingUser.UpdatedBy = "system";
+        }
     }
 }

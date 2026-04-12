@@ -92,3 +92,8 @@ All the below decision is made for development speed and simplicity, and may not
 ## I. Things to do
 
 - [Infrastructure as code (IaC)](https://learn.microsoft.com/en-us/devops/deliver/what-is-infrastructure-as-code) - To enforce consistency by representing desired environment states via well-documented code
+
+## J. Rule of Thumbs
+
+- On selection of methods to use:
+  > If two implementations have the same impact, always pick the one with clearer intent. If two implementations have the same intent, always pick the one with better impact.
