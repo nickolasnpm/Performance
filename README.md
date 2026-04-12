@@ -9,14 +9,14 @@ A .NET-based web API to test the performance optimization strategy. Among the st
 
 This project follows a monolith architecture for development speed and simplicity whereby the folder is arranged accordingly with the class libraries in Clean Architecture.
 
-- **Central Package Management (CPM)** - To manage common dependencies for many different projects
-
 ## C. Design Patterns
 
+- **Central Package Management (CPM)** - To manage common dependencies for many different projects
 - **Dependency Injection**: Used throughout the application for loose coupling and testability.
 - **Repository Pattern**: Abstracts data access logic, providing a consistent interface for querying and persisting entities.
 - **Unit of Work Pattern**: Manages transactions and ensures data consistency across multiple repositories.
 - **Facade Pattern**: Provide simplified and single interface for complex ecosystem, especially repositories via `IUnitOfWork`.
+- **Result Pattern**: To handle operation outcomes explicitly by returning an object that encapsulates success, failure, and any returned data
 
 ## D. Deployment Management
 
@@ -72,10 +72,11 @@ This project follows a monolith architecture for development speed and simplicit
 
 ## G. API Endpoints
 
-- `GET /api/users` - Retrieve users
-- `POST /api/users` - Create a new user
-- `PUT /api/users` - Update user
-- `DELETE /api/users` - Delete user
+- `GET /api/Users/getusers` - Retrieve list of users
+- `GET /api/Users/getbyid` - Retrieve single user
+- `POST /api/Users/createusers` - Create a new user
+- `PUT /api/Users/updateusers` - Update user
+- `DELETE /api/Users/deleteusers` - Delete user
 
 Refer to `Performance.http` for sample requests.
 

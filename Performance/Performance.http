@@ -1,6 +1,7 @@
 @Performance_HostAddress = http://localhost:5113
 
-GET {{Performance_HostAddress}}/weatherforecast/
+### Get User By ID
+GET {{Performance_HostAddress}}/api/user/getbyid?id=1
 Accept: application/json
 
 ###
