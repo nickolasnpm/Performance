@@ -102,10 +102,10 @@ namespace Performance.Domain.Services
                 .ToListAsync();
 
             var existingIds = existingUsers.Select(u => u.Id).ToHashSet();
-            var notfoundIds = entityIds.Except(existingIds).ToList();
+            var notFoundIds = entityIds.Except(existingIds).ToList();
 
-            if (notfoundIds.Any())
-                return Result<bool, List<long>>.Failure(notfoundIds);
+            if (notFoundIds.Any())
+                return Result<bool, List<long>>.Failure(notFoundIds);
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);
             requestDTOs.MapDTOToEntity(dto => existingUsersById[dto.Id], UserMapper.UpdateRequestToEntity);
@@ -124,10 +124,10 @@ namespace Performance.Domain.Services
                 .Where(u => ids.Contains(u.Id))
                 .Select(u => u.Id).ToHashSetAsync();
 
-            var notfoundids = ids.Except(existingIds).ToList();
+            var notFoundIds = ids.Except(existingIds).ToList();
 
-            if (notfoundids.Any())
-                return Result<bool, List<long>>.Failure(notfoundids);
+            if (notFoundIds.Any())
+                return Result<bool, List<long>>.Failure(notFoundIds);
 
             await unitOfWork.UserRepository.Delete(existingIds);
 
