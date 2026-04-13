@@ -21,15 +21,20 @@ namespace Performance.API.Controllers
 
         [HttpGet("getbyid")]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserDTO>> GetUserById([FromQuery] long Id)
         {
             var result = await userServices.GetByIdAsync(Id);
 
-            if (result != null)
-                return Ok(result);
-
-            return NotFound();
+            return result is not null ? Ok(result) : NotFound(
+                new ResultError
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Message = $"User with id {Id} not found."
+                }
+            );
         }
 
         [HttpPost("createusers")]
