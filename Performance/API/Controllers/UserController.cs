@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Performance.API.Exceptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.DTOs.Users;
+using Performance.Application.Common.Models;
 
 namespace Performance.API.Controllers
 {
@@ -34,47 +34,50 @@ namespace Performance.API.Controllers
 
         [HttpPost("createusers")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(List<AddErrorResponseDTO>), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError<List<AddErrorResponseDTO>>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> CreateUsers([FromBody] List<AddUserRequestDTO> requestDTOs)
         {
             var result = await userServices.CreateUsers(requestDTOs);
-
-            if (result.IsSuccess)
-                return Ok(result.Data);
-
-            return Conflict(result.Error);
+            return result.IsSuccess ? Ok(result.Data) : result.Error?.Code switch
+            {
+                StatusCodes.Status400BadRequest => BadRequest(result.Error),
+                StatusCodes.Status409Conflict => Conflict(result.Error),
+                _ => throw new Exception()
+            };
         }
 
         [HttpPut("updateusers")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(List<long>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError<List<long>>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> UpdateUsers([FromBody] List<UpdateUserRequestDTO> requestDTOs)
         {
             var result = await userServices.UpdateUsers(requestDTOs);
-
-            if (result.IsSuccess)
-                return Ok(result.Data);
-
-            return NotFound(result.Error);
+            return result.IsSuccess ? Ok(result.Data) : result.Error?.Code switch
+            {
+                StatusCodes.Status400BadRequest => BadRequest(result.Error),
+                StatusCodes.Status404NotFound => NotFound(result.Error),
+                _ => throw new Exception()
+            };
         }
 
         [HttpDelete("deleteusers")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(List<long>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ResultError<List<long>>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> DeleteUsers([FromBody] HashSet<long> ids)
         {
             var result = await userServices.DeleteUsers(ids);
-
-            if (result.IsSuccess)
-                return Ok(result.Data);
-
-            return NotFound(result.Error);
+            return result.IsSuccess ? Ok(result.Data) : result.Error?.Code switch
+            {
+                StatusCodes.Status400BadRequest => BadRequest(result.Error),
+                StatusCodes.Status404NotFound => NotFound(result.Error),
+                _ => throw new Exception()
+            };
         }
     }
 }

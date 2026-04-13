@@ -24,12 +24,12 @@ namespace Performance.Application.Extensions.Mapping.Users
             IsEmailVerified = user.IsEmailVerified,
             IsActive = user.IsActive,
             LastLoginAt = user.LastLoginAt,
-            Address = user.Address?.MapEntityToDTO(AddressMapper.ToDTO) ?? null,
-            Roles = user.Roles?.MapEntityToDTO(RoleMapper.ToDTO).ToList() ?? null,
-            BankAccount = user.BankAccount?.MapEntityToDTO(BankAccountMapper.ToDTO) ?? null,
-            CreditCards = user.CreditCards?.MapEntityToDTO(CreditCardMapper.ToDTO) ?? null,
-            Loans = user.Loans?.MapEntityToDTO(LoanMapper.ToDTO).ToList() ?? null,
-            SupportTickets = user.SupportTickets?.MapEntityToDTO(SupportTicketMapper.ToDTO) ?? null
+            Address = user.Address?.Map(AddressMapper.ToDTO) ?? null,
+            Roles = user.Roles?.Map(RoleMapper.ToDTO).ToList() ?? null,
+            BankAccount = user.BankAccount?.Map(BankAccountMapper.ToDTO) ?? null,
+            CreditCards = user.CreditCards?.Map(CreditCardMapper.ToDTO) ?? null,
+            Loans = user.Loans?.Map(LoanMapper.ToDTO).ToList() ?? null,
+            SupportTickets = user.SupportTickets?.Map(SupportTicketMapper.ToDTO) ?? null
         };
 
         public static User AddRequestToEntity(AddUserRequestDTO request) => new()
@@ -47,7 +47,7 @@ namespace Performance.Application.Extensions.Mapping.Users
             UpdatedBy = "system"
         };
 
-        public static void UpdateRequestToEntity(UpdateUserRequestDTO request, User existingUser)
+        public static void UpdateRequestToEntity(User existingUser, UpdateUserRequestDTO request)
         {
             existingUser.FirstName = request.FirstName ?? existingUser.FirstName;
             existingUser.LastName = request.LastName ?? existingUser.LastName;

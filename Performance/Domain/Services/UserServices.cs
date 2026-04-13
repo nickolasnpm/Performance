@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Diagnostics.Tracing.StackSources;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
 using Performance.Application.DTOs.Users;
@@ -11,7 +8,6 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
 using Performance.Domain.Entity;
-using Performance.Infrastructure;
 
 namespace Performance.Domain.Services
 {
@@ -52,10 +48,11 @@ namespace Performance.Domain.Services
             return await GetAllAsync().FirstOrDefaultAsync(u => u.Id == Id);
         }
 
-        public async Task<Result<bool, List<AddErrorResponseDTO>>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
+        public async Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
-                throw new ArgumentException(MaxBatchSizeErrorResponse);
+                return Result<bool, ResultError>.Failure(new ResultError 
+                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
 
             var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
             var requestedEmails = requestDTOs.Select(u => u.Email).ToHashSet();
@@ -80,19 +77,21 @@ namespace Performance.Domain.Services
                 .ToList();
 
             if (errors.Any())
-                return Result<bool, List<AddErrorResponseDTO>>.Failure(errors);
+                return Result<bool, ResultError>.Failure(new ResultError<List<AddErrorResponseDTO>> 
+                    { Code = StatusCodes.Status409Conflict, Message = "Some usernames or emails already exist.", Payload = errors });
 
-            var toBeCreated = requestDTOs.MapDTOToEntity(UserMapper.AddRequestToEntity);
+            var toBeCreated = requestDTOs.Map(UserMapper.AddRequestToEntity);
             await unitOfWork.UserRepository.Create(toBeCreated);
             await unitOfWork.SaveChangesAsync();
 
-            return Result<bool, List<AddErrorResponseDTO>>.Success(true);
+            return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, List<long>>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs)
+        public async Task<Result<bool, ResultError>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
-                throw new ArgumentException(MaxBatchSizeErrorResponse);
+                return Result<bool, ResultError>.Failure(new ResultError 
+                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
 
             HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
@@ -105,20 +104,22 @@ namespace Performance.Domain.Services
             var notFoundIds = entityIds.Except(existingIds).ToList();
 
             if (notFoundIds.Any())
-                return Result<bool, List<long>>.Failure(notFoundIds);
+                return Result<bool, ResultError>.Failure(new ResultError<List<long>>
+                    { Code = StatusCodes.Status404NotFound, Message = "Some users not found.", Payload = notFoundIds });
 
-            var existingUsersById = existingUsers.ToDictionary(u => u.Id);
-            requestDTOs.MapDTOToEntity(dto => existingUsersById[dto.Id], UserMapper.UpdateRequestToEntity);
+            var existingUsersById = existingUsers.ToDictionary(u => u.Id);            
+            requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[dto.Id], dto));
 
             await unitOfWork.SaveChangesAsync();
 
-            return Result<bool, List<long>>.Success(true);
+            return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, List<long>>> DeleteUsers(HashSet<long> ids)
+        public async Task<Result<bool, ResultError>> DeleteUsers(HashSet<long> ids)
         {
             if (ids.Count > MaxBatchSize)
-                throw new ArgumentException(MaxBatchSizeErrorResponse);
+                return Result<bool, ResultError>.Failure(new ResultError 
+                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
 
             var existingIds = await GetAllAsync()
                 .Where(u => ids.Contains(u.Id))
@@ -127,11 +128,12 @@ namespace Performance.Domain.Services
             var notFoundIds = ids.Except(existingIds).ToList();
 
             if (notFoundIds.Any())
-                return Result<bool, List<long>>.Failure(notFoundIds);
+                return Result<bool, ResultError>.Failure(new ResultError<List<long>>
+                    { Code = StatusCodes.Status404NotFound, Message = "Some users not found.", Payload = notFoundIds });
 
             await unitOfWork.UserRepository.Delete(existingIds);
 
-            return Result<bool, List<long>>.Success(true);
+            return Result<bool, ResultError>.Success(true);
         }
 
         #region private methods
@@ -145,11 +147,9 @@ namespace Performance.Domain.Services
             bool hasNextPage = request.Page < totalPages;
             bool hasPreviousPage = request.Page > 1;
 
-            // var result = await users.ToListAsync();
-
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = users.MapEntityToDTO(UserMapper.EntityToDTO),
+                Data = users.Map(UserMapper.EntityToDTO),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -187,7 +187,7 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.MapEntityToDTO(UserMapper.EntityToDTO),
+                Data = result.Map(UserMapper.EntityToDTO),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,

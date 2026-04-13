@@ -6,8 +6,8 @@ namespace Performance.Application.Interface.Services
 {
     public interface IUserServices: IBaseServices<User, UserResponseDTO<UserDTO>, UserRequestDTO>
     {
-        Task<Result<bool, List<AddErrorResponseDTO>>> CreateUsers(List<AddUserRequestDTO> requestDTOs);
-        Task<Result<bool, List<long>>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs);
-        Task<Result<bool, List<long>>> DeleteUsers(HashSet<long> ids);
+        Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs);
+        Task<Result<bool, ResultError>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs);
+        Task<Result<bool, ResultError>> DeleteUsers(HashSet<long> ids);
     }
 }
