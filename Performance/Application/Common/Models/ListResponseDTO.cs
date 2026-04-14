@@ -1,4 +1,4 @@
-﻿namespace Performance.Application.DTOs.Users
+﻿namespace Performance.Application.Common.Models
 {
     public class ListResponseDTO<T>
     {
