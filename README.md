@@ -1,28 +1,29 @@
-# A. Performance
+# Performance Project
 
-A .NET-based web API to test the performance optimization strategy. Among the strategy tested are:
+This project is a .NET-based web API to test the performance optimization strategy. Among the strategy tested are:
 
 1. Offset pagination vs Cursor pagination.
 2. Batch processing for Create, Update, & Delete.
 
-## B. Architecture
+## A. Architecture
 
 This project follows a monolith architecture for development speed and simplicity whereby the folder is arranged accordingly with the class libraries in Clean Architecture.
 
-## C. Design Patterns
+## B. Design Patterns
 
 - **Central Package Management (CPM)** - To manage common dependencies for many different projects
 - **Dependency Injection**: Used throughout the application for loose coupling and testability.
 - **Repository Pattern**: Abstracts data access logic, providing a consistent interface for querying and persisting entities.
 - **Unit of Work Pattern**: Manages transactions and ensures data consistency across multiple repositories.
 - **Facade Pattern**: Provide simplified and single interface for complex ecosystem, especially repositories via `IUnitOfWork`.
-- **Result Pattern**: To handle operation outcomes explicitly by returning an object that encapsulates success, failure, and any returned data
+- **Result Pattern**: To handle *expected business logic* outcomes explicitly by returning an object that encapsulates success, failure, and any returned data
+- **Error Controller**: To handle *unexpected exceptions* (500, and mapped exception types) with `Problem Details`
 
-## D. Deployment Management
+## C. Deployment Management
 
 - **Migration Strategy**: Migrations will be run during app startup for non-production environment. It will be run in CD pipeline for production environment.
 
-## E. Technologies and Tools
+## D. Technologies and Tools
 
 - **Framework**: .NET 10 (C#)
 - **Web Framework**: ASP.NET Core Web API
@@ -38,7 +39,7 @@ This project follows a monolith architecture for development speed and simplicit
   - Pipeline security scanning using Snyk
 - **Build Tools**: MSBuild, NuGet for package management
 
-## F. Getting Started
+## E. Getting Started
 
 1. **Prerequisites**:
    - .NET 10 SDK
@@ -70,17 +71,17 @@ This project follows a monolith architecture for development speed and simplicit
    - Use Azure DevOps pipelines for automated builds and deployments.
    - For local Docker build: `docker build -t performance .`
 
-## G. API Endpoints
+## F. API Endpoints
 
-- `GET /api/Users/getusers` - Retrieve list of users
-- `GET /api/Users/getbyid` - Retrieve single user
-- `POST /api/Users/createusers` - Create a new user
-- `PUT /api/Users/updateusers` - Update user
-- `DELETE /api/Users/deleteusers` - Delete user
+- `GET /api/Users` - Retrieve list of users
+- `GET /api/User/{id}` - Retrieve single user
+- `POST /api/Users` - Create a new user
+- `PUT /api/Users` - Update user
+- `DELETE /api/Users` - Delete user
 
 Refer to `Performance.http` for sample requests.
 
-## H. Remarks
+## G. Remarks
 
 All the below decision is made for development speed and simplicity, and may not follow the enterprise-level standard practice.
 
@@ -89,11 +90,6 @@ All the below decision is made for development speed and simplicity, and may not
 - Manual mapping from database entity to DTOs instead of using external library such as Automapper
 - Using custom in-memory cache implementation instead of external caching tool or library at all
 
-## I. Things to do
+## H. Things to do
 
 - [Infrastructure as code (IaC)](https://learn.microsoft.com/en-us/devops/deliver/what-is-infrastructure-as-code) - To enforce consistency by representing desired environment states via well-documented code
-
-## J. Rule of Thumbs
-
-- On selection of methods to use:
-  > If two implementations have the same impact, always pick the one with clearer intent. If two implementations have the same intent, always pick the one with better impact.
