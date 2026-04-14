@@ -1,9 +1,8 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
-using Performance.Application.DTOs.Users;
-using Performance.Application.Extensions.Repository;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Infrastructure.Repositories;
 

@@ -1,12 +1,13 @@
-﻿namespace Performance.Application.Interface.Services
+﻿using Performance.Application.Common.Models;
+using Performance.Application.DTOs.Users;
+
+namespace Performance.Application.Interface.Services
 {
-    public interface IBaseServices<TEntity, TResponse, TRequest> 
-        where TEntity : class
+    public interface IBaseServices<TResponse, TRequest> 
         where TResponse : class
         where TRequest : class
     {
-        IQueryable<TEntity> GetAllAsync();
-        Task<TResponse> GetPaginatedListAsync(TRequest request);
-        Task<TEntity?> GetByIdAsync(long Id);
+        Task<Result<ListResponseDTO<TResponse>, ResultError>> GetPaginatedListAsync(TRequest request);
+        Task<Result<TResponse, ResultError>> GetByIdAsync(long Id);
     }
 }

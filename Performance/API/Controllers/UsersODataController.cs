@@ -1,11 +1,7 @@
-﻿using CommandLine.Text;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
-using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Domain.Entity;
 
 namespace Performance.API.Controllers
 {

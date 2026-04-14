@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Performance.API.Controllers;
-using Performance.API.Exceptions;
 using Performance.Application.Common.Enums;
+using Performance.Application.Common.Models;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Interface.Services;
 
@@ -25,7 +24,7 @@ namespace UnitTest
         public static IEnumerable<object[]> PaginationTestData =>
         [
             [
-                new UserRequestDTO
+                new ListRequestDTO
                 {
                     PaginationType = PaginationType.Offset,
                     OffsetPagination = new OffsetPaginationRequest { PageSize = 100, Page = 1 }
@@ -40,7 +39,7 @@ namespace UnitTest
                 }
             ],
             [
-                new UserRequestDTO
+                new ListRequestDTO
                 {
                     PaginationType = PaginationType.Cursor,
                     CursorPagination = new CursorPaginationRequest { PageSize = 100, Cursor = 0, IsQueryPreviousPage = false }
@@ -62,18 +61,18 @@ namespace UnitTest
 
         [Theory]
         [MemberData(nameof(PaginationTestData))]
-        public async Task GetPaginatedUsers_ValidRequest_ReturnsOkWithResult(UserRequestDTO userRequestDTO, UserResponseDTO<UserDTO> expectedResultDTO)
+        public async Task GetPaginatedUsers_ValidRequest_ReturnsOkWithResult(ListRequestDTO userRequestDTO, ListResponseDTO<UserDTO> expectedResultDTO)
         {
             // Arrange
             _mockUserServices
-                .Setup(s => s.GetPaginatedListAsync(It.IsAny<UserRequestDTO>()))
-                .ReturnsAsync(expectedResultDTO);
+                .Setup(s => s.GetPaginatedListAsync(It.IsAny<ListRequestDTO>()))
+                .ReturnsAsync(Result<ListResponseDTO<UserDTO>, ResultError>.Success(expectedResultDTO));
 
             // Act
             var result = await _controller.GetPaginatedUsers(userRequestDTO);
 
             // Assert
-            _mockUserServices.Verify(s => s.GetPaginatedListAsync(It.IsAny<UserRequestDTO>()), Times.Once);
+            _mockUserServices.Verify(s => s.GetPaginatedListAsync(It.IsAny<ListRequestDTO>()), Times.Once);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(expectedResultDTO, okResult.Value);

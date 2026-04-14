@@ -7,7 +7,6 @@ using Performance.Application.Extensions.Mapping.Users;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Domain.Entity;
 
 namespace Performance.Domain.Services
 {
@@ -16,36 +15,38 @@ namespace Performance.Domain.Services
     {
         private const int MaxBatchSize = 500;
         private readonly string MaxBatchSizeErrorResponse = $"Batch size cannot exceed {MaxBatchSize}";
-
-        public IQueryable<User> GetAllAsync()
-        {
-            return unitOfWork.UserRepository.GetAll();
-        }
-
-        public async Task<UserResponseDTO<UserDTO>> GetPaginatedListAsync(UserRequestDTO request)
+        public async Task<Result<ListResponseDTO<UserDTO>, ResultError>> GetPaginatedListAsync(ListRequestDTO request)
         {
             switch (request.PaginationType)
             {
                 case PaginationType.Offset:
                     if (request.OffsetPagination is null)
-                       throw new ArgumentException("Offset pagination request is required.");
+                        return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
+                            { Code = StatusCodes.Status400BadRequest, Message = "Offset pagination request is required." });
 
-                    return await OffsetPaginationAsync(request.OffsetPagination);
+                    return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await OffsetPaginationAsync(request.OffsetPagination));
 
                 case PaginationType.Cursor:
                     if (request.CursorPagination is null)
-                       throw new ArgumentException("Cursor pagination request is required.");
+                        return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
+                            { Code = StatusCodes.Status400BadRequest, Message = "Cursor pagination request is required." });
 
-                    return await CursorPaginationAsync(request.CursorPagination);
+                    return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await CursorPaginationAsync(request.CursorPagination));
 
                 default:
-                    throw new ArgumentException("Invalid pagination type.");
+                    return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
+                        { Code = StatusCodes.Status400BadRequest, Message = "Invalid pagination type." });
             }
         }
 
-        public async Task<User?> GetByIdAsync(long Id)
+        public async Task<Result<UserDTO, ResultError>> GetByIdAsync(long Id)
         {
-            return await GetAllAsync().FirstOrDefaultAsync(u => u.Id == Id);
+            var user = await unitOfWork.UserRepository.GetAll().FirstOrDefaultAsync(u => u.Id == Id);
+
+            return user != null 
+                ? Result<UserDTO, ResultError>.Success(user.Map(UserMapper.EntityToDTO)) 
+                : Result<UserDTO, ResultError>.Failure(new ResultError 
+                    { Code = StatusCodes.Status404NotFound, Message = "User not found." });
         }
 
         public async Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
@@ -57,7 +58,7 @@ namespace Performance.Domain.Services
             var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
             var requestedEmails = requestDTOs.Select(u => u.Email).ToHashSet();
 
-            var existingUsers = await GetAllAsync()
+            var existingUsers = await unitOfWork.UserRepository.GetAll()
                 .Where(u => requestedUsernames.Contains(u.Username) || requestedEmails.Contains(u.Email))
                 .Select(u => new { u.Username, u.Email })
                 .ToListAsync();
@@ -95,7 +96,7 @@ namespace Performance.Domain.Services
 
             HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
-            var existingUsers = await GetAllAsync()
+            var existingUsers = await unitOfWork.UserRepository.GetAll()
                 .AsTracking()
                 .Where(u => entityIds.Contains(u.Id))
                 .ToListAsync();
@@ -105,7 +106,7 @@ namespace Performance.Domain.Services
 
             if (notFoundIds.Any())
                 return Result<bool, ResultError>.Failure(new ResultError<List<long>>
-                    { Code = StatusCodes.Status404NotFound, Message = "Some users not found.", Payload = notFoundIds });
+                    { Code = StatusCodes.Status404NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);            
             requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[dto.Id], dto));
@@ -121,7 +122,7 @@ namespace Performance.Domain.Services
                 return Result<bool, ResultError>.Failure(new ResultError 
                     { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
 
-            var existingIds = await GetAllAsync()
+            var existingIds = await unitOfWork.UserRepository.GetAll()
                 .Where(u => ids.Contains(u.Id))
                 .Select(u => u.Id).ToHashSetAsync();
 

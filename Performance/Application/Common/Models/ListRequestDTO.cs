@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Performance.Application.Common.Enums;
 
-namespace Performance.Application.DTOs.Users
+namespace Performance.Application.Common.Models
 {
-    public class UserRequestDTO
+    public class ListRequestDTO
     {
         [EnumDataType(typeof(PaginationType))]
         public PaginationType PaginationType { get; set; }

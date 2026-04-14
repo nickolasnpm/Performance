@@ -10,34 +10,28 @@ namespace Performance.API.Controllers
     public class UserController(IUserServices userServices)
         : ControllerBase
     {
-        [HttpGet("getusers")]
-        [ProducesResponseType(typeof(UserResponseDTO<UserDTO>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [HttpGet]
+        [ProducesResponseType(typeof(ListResponseDTO<UserDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserResponseDTO<UserDTO>>> GetPaginatedUsers([FromQuery] UserRequestDTO request)
+        public async Task<ActionResult<ListResponseDTO<UserDTO>>> GetPaginatedUsers([FromQuery] ListRequestDTO request)
         {
-            return Ok(await userServices.GetPaginatedListAsync(request));
+            var result = await userServices.GetPaginatedListAsync(request);
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Error);
         }
 
-        [HttpGet("getbyid")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ResultError), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromQuery] long Id)
+        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] long Id)
         {
             var result = await userServices.GetByIdAsync(Id);
-
-            return result is not null ? Ok(result) : NotFound(
-                new ResultError
-                {
-                    Code = StatusCodes.Status404NotFound,
-                    Message = $"User with id {Id} not found."
-                }
-            );
+            return result.IsSuccess ? Ok(result.Data) : NotFound(result.Error);
         }
 
-        [HttpPost("createusers")]
+        [HttpPost]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ResultError<List<AddErrorResponseDTO>>), StatusCodes.Status409Conflict)]
@@ -53,7 +47,7 @@ namespace Performance.API.Controllers
             };
         }
 
-        [HttpPut("updateusers")]
+        [HttpPut]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ResultError<List<long>>), StatusCodes.Status404NotFound)]
@@ -69,7 +63,7 @@ namespace Performance.API.Controllers
             };
         }
 
-        [HttpDelete("deleteusers")]
+        [HttpDelete]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ResultError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ResultError<List<long>>), StatusCodes.Status404NotFound)]
