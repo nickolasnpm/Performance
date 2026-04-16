@@ -14,7 +14,7 @@ namespace Performance.Domain.Services
         : IUserServices
     {
         private const int MaxBatchSize = 500;
-        private readonly string MaxBatchSizeErrorResponse = $"Batch size cannot exceed {MaxBatchSize}";
+        private static readonly string MaxBatchSizeErrorResponse = $"Batch size cannot exceed {MaxBatchSize}";
         public async Task<Result<ListResponseDTO<UserDTO>, ResultError>> GetPaginatedListAsync(ListRequestDTO request)
         {
             switch (request.PaginationType)
@@ -22,38 +22,69 @@ namespace Performance.Domain.Services
                 case PaginationType.Offset:
                     if (request.OffsetPagination is null)
                         return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                            { Code = StatusCodes.Status400BadRequest, Message = "Offset pagination request is required." });
+                            { Type = ErrorCode.ValidationError, Message = "Offset pagination request is required." });
 
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await OffsetPaginationAsync(request.OffsetPagination));
 
                 case PaginationType.Cursor:
                     if (request.CursorPagination is null)
                         return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                            { Code = StatusCodes.Status400BadRequest, Message = "Cursor pagination request is required." });
+                            { Type = ErrorCode.ValidationError, Message = "Cursor pagination request is required." });
 
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await CursorPaginationAsync(request.CursorPagination));
 
                 default:
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                        { Code = StatusCodes.Status400BadRequest, Message = "Invalid pagination type." });
+                        { Type = ErrorCode.ValidationError, Message = "Invalid pagination type." });
             }
         }
 
-        public async Task<Result<UserDTO, ResultError>> GetByIdAsync(long Id)
+        public async Task<Result<UserDTO, ResultError>> GetByIdAsync(long id)
         {
-            var user = await unitOfWork.UserRepository.GetAll().FirstOrDefaultAsync(u => u.Id == Id);
+            var user = await unitOfWork.UserRepository.GetAll()
+                .Where(u => u.Id == id)
+                .Select(u => u.Map(UserMapper.EntityToDTO))
+                .FirstOrDefaultAsync();
 
             return user != null 
-                ? Result<UserDTO, ResultError>.Success(user.Map(UserMapper.EntityToDTO)) 
+                ? Result<UserDTO, ResultError>.Success(user) 
                 : Result<UserDTO, ResultError>.Failure(new ResultError 
-                    { Code = StatusCodes.Status404NotFound, Message = "User not found." });
+                    { Type = ErrorCode.NotFound, Message = "User not found." });
         }
 
         public async Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
+                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
+
+            var duplicatesInBatch = requestDTOs.GroupBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            var duplicateEmailsInBatch = requestDTOs.GroupBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicatesInBatch.Any() || duplicateEmailsInBatch.Any())
+            {
+                var dataDuplicatedErrors = requestDTOs
+                    .Where(u => duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase) 
+                                || duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase))
+                    .Select(u => new AddErrorResponseDTO
+                    {
+                        Username = u.Username,
+                        Email = u.Email,
+                        IsUsernameExist = duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase),
+                        IsEmailExist = duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase)
+                    })
+                    .ToList();
+
+                return Result<bool, ResultError>.Failure(new ResultError<List<AddErrorResponseDTO>> 
+                    { Type = ErrorCode.Conflict, Message = "Some usernames or emails are duplicated in the request.", Payload = dataDuplicatedErrors });
+            }
 
             var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
             var requestedEmails = requestDTOs.Select(u => u.Email).ToHashSet();
@@ -63,10 +94,10 @@ namespace Performance.Domain.Services
                 .Select(u => new { u.Username, u.Email })
                 .ToListAsync();
 
-            var existingUsernames = existingUsers.Select(u => u.Username).ToHashSet();
-            var existingEmails = existingUsers.Select(u => u.Email).ToHashSet();
+            var existingUsernames = existingUsers.Select(u => u.Username).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existingEmails = existingUsers.Select(u => u.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var errors = requestDTOs
+            var dataExistedErrors = requestDTOs
                 .Select(u => new AddErrorResponseDTO
                 {
                     Username = u.Username,
@@ -77,9 +108,9 @@ namespace Performance.Domain.Services
                 .Where(e => e.IsUsernameExist || e.IsEmailExist)
                 .ToList();
 
-            if (errors.Any())
+            if (dataExistedErrors.Any())
                 return Result<bool, ResultError>.Failure(new ResultError<List<AddErrorResponseDTO>> 
-                    { Code = StatusCodes.Status409Conflict, Message = "Some usernames or emails already exist.", Payload = errors });
+                    { Type = ErrorCode.Conflict, Message = "Some usernames or emails already exist.", Payload = dataExistedErrors });
 
             var toBeCreated = requestDTOs.Map(UserMapper.AddRequestToEntity);
             await unitOfWork.UserRepository.Create(toBeCreated);
@@ -92,7 +123,7 @@ namespace Performance.Domain.Services
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
+                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
             HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
@@ -106,7 +137,7 @@ namespace Performance.Domain.Services
 
             if (notFoundIds.Any())
                 return Result<bool, ResultError>.Failure(new ResultError<List<long>>
-                    { Code = StatusCodes.Status404NotFound, Message = "Some users are not found.", Payload = notFoundIds });
+                    { Type = ErrorCode.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);            
             requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[dto.Id], dto));
@@ -120,7 +151,7 @@ namespace Performance.Domain.Services
         {
             if (ids.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Code = StatusCodes.Status400BadRequest, Message = MaxBatchSizeErrorResponse });
+                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
             var existingIds = await unitOfWork.UserRepository.GetAll()
                 .Where(u => ids.Contains(u.Id))
@@ -130,7 +161,7 @@ namespace Performance.Domain.Services
 
             if (notFoundIds.Any())
                 return Result<bool, ResultError>.Failure(new ResultError<List<long>>
-                    { Code = StatusCodes.Status404NotFound, Message = "Some users not found.", Payload = notFoundIds });
+                    { Type = ErrorCode.NotFound, Message = "Some users not found.", Payload = notFoundIds });
 
             await unitOfWork.UserRepository.Delete(existingIds);
 
@@ -141,7 +172,6 @@ namespace Performance.Domain.Services
         private async Task<OffsetPaginationResponse<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
-            //var (users, totalCount) = await _offsetRepository.GetPaginatedUsersByCursor(request, new UserIncludeOptions() { Address = true });
 
             int totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
 
@@ -188,7 +218,7 @@ namespace Performance.Domain.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.Map(UserMapper.EntityToDTO),
+                Data = result.Select(u => u.Map(UserMapper.EntityToDTO)).ToList(),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,
