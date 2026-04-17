@@ -1,6 +1,6 @@
 namespace Performance.Application.Common.Enums
 {
-    public enum ErrorCode
+    public enum ErrorType
     {
         ValidationError,
         NotFound,

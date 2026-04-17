@@ -22,20 +22,20 @@ namespace Performance.Domain.Services
                 case PaginationType.Offset:
                     if (request.OffsetPagination is null)
                         return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                            { Type = ErrorCode.ValidationError, Message = "Offset pagination request is required." });
+                            { ErrorType = ErrorType.ValidationError, Message = "Offset pagination request is required." });
 
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await OffsetPaginationAsync(request.OffsetPagination));
 
                 case PaginationType.Cursor:
                     if (request.CursorPagination is null)
                         return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                            { Type = ErrorCode.ValidationError, Message = "Cursor pagination request is required." });
+                            { ErrorType = ErrorType.ValidationError, Message = "Cursor pagination request is required." });
 
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Success(await CursorPaginationAsync(request.CursorPagination));
 
                 default:
                     return Result<ListResponseDTO<UserDTO>, ResultError>.Failure(new ResultError 
-                        { Type = ErrorCode.ValidationError, Message = "Invalid pagination type." });
+                        { ErrorType = ErrorType.ValidationError, Message = "Invalid pagination type." });
             }
         }
 
@@ -49,14 +49,14 @@ namespace Performance.Domain.Services
             return user != null 
                 ? Result<UserDTO, ResultError>.Success(user) 
                 : Result<UserDTO, ResultError>.Failure(new ResultError 
-                    { Type = ErrorCode.NotFound, Message = "User not found." });
+                    { ErrorType = ErrorType.NotFound, Message = "User not found." });
         }
 
         public async Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
+                    { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
             var duplicatesInBatch = requestDTOs.GroupBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
                 .Where(g => g.Count() > 1)
@@ -82,8 +82,8 @@ namespace Performance.Domain.Services
                     })
                     .ToList();
 
-                return Result<bool, ResultError>.Failure(new ResultError<List<AddErrorResponseDTO>> 
-                    { Type = ErrorCode.Conflict, Message = "Some usernames or emails are duplicated in the request.", Payload = dataDuplicatedErrors });
+                return Result<bool, ResultError>.Failure(new ResultError 
+                    { ErrorType = ErrorType.Conflict, Message = "Some usernames or emails are duplicated in the request.", Payload = dataDuplicatedErrors });
             }
 
             var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
@@ -109,8 +109,8 @@ namespace Performance.Domain.Services
                 .ToList();
 
             if (dataExistedErrors.Any())
-                return Result<bool, ResultError>.Failure(new ResultError<List<AddErrorResponseDTO>> 
-                    { Type = ErrorCode.Conflict, Message = "Some usernames or emails already exist.", Payload = dataExistedErrors });
+                return Result<bool, ResultError>.Failure(new ResultError 
+                    { ErrorType = ErrorType.Conflict, Message = "Some usernames or emails already exist.", Payload = dataExistedErrors });
 
             var toBeCreated = requestDTOs.Map(UserMapper.AddRequestToEntity);
             await unitOfWork.UserRepository.Create(toBeCreated);
@@ -123,7 +123,7 @@ namespace Performance.Domain.Services
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
+                    { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
             HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
@@ -136,8 +136,8 @@ namespace Performance.Domain.Services
             var notFoundIds = entityIds.Except(existingIds).ToList();
 
             if (notFoundIds.Any())
-                return Result<bool, ResultError>.Failure(new ResultError<List<long>>
-                    { Type = ErrorCode.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
+                return Result<bool, ResultError>.Failure(new ResultError
+                    { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);            
             requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[dto.Id], dto));
@@ -151,7 +151,7 @@ namespace Performance.Domain.Services
         {
             if (ids.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError 
-                    { Type = ErrorCode.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
+                    { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
             var existingIds = await unitOfWork.UserRepository.GetAll()
                 .Where(u => ids.Contains(u.Id))
@@ -160,8 +160,8 @@ namespace Performance.Domain.Services
             var notFoundIds = ids.Except(existingIds).ToList();
 
             if (notFoundIds.Any())
-                return Result<bool, ResultError>.Failure(new ResultError<List<long>>
-                    { Type = ErrorCode.NotFound, Message = "Some users not found.", Payload = notFoundIds });
+                return Result<bool, ResultError>.Failure(new ResultError
+                    { ErrorType = ErrorType.NotFound, Message = "Some users not found.", Payload = notFoundIds });
 
             await unitOfWork.UserRepository.Delete(existingIds);
 
