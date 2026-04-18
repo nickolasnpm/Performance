@@ -1,5 +1,4 @@
-﻿using Performance.Application.DTOs.Users;
-using Performance.Application.Extensions.Repository.EntityIncludeOptions;
+﻿using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Domain.Entity;
 using Performance.Application.Common.Models;
 

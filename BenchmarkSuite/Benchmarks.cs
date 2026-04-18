@@ -1,31 +1,22 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using BenchmarkDotNet.Toolchains.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Performance.API.Controllers;
-using Performance.Application;
-using Performance.Application.Common;
 using Performance.Application.Common.Enums;
-using Performance.Application.DTOs;
+using Performance.Application.Common.Models;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Domain;
-using Performance.Domain.Services;
-using Performance.Infrastructure;
-using Performance.Infrastructure.Repositories;
-using Performance.Infrastructure.UnitOfWork;
-using System;
-using System.Collections.Generic;
+using Performance.Application.Services;
+using Performance.Infrastructure.Persistence;
+using Performance.Infrastructure.Persistence.Repositories;
+using Performance.Infrastructure.Persistence.UnitOfWork;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BenchmarkSuite
 {
@@ -148,13 +139,13 @@ namespace BenchmarkSuite
 
         #region Helper Methods
 
-        private async Task<ActionResult<ListResponseDTO<UserDTO>>> ExecuteSingleRequest(RequestDTO request)
+        private async Task<ActionResult<ListResponseDTO<UserDTO>>> ExecuteSingleRequest(ListRequestDTO request)
         {
             var controller = new UserController(_userServices);
             return await controller.GetPaginatedUsers(request);
         }
 
-        private async Task<object> ExecuteConcurrentRequests(Func<int, RequestDTO> requestFactory)
+        private async Task<object> ExecuteConcurrentRequests(Func<int, ListRequestDTO> requestFactory)
         {
             var tasks = new List<Task<RequestResult>>();
             var stopwatch = Stopwatch.StartNew();
@@ -260,7 +251,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Offset: First Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Offset_RetrieveFirstPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Offset,
                 OffsetPagination = new OffsetPaginationRequest
@@ -275,7 +266,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Offset: Middle Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Offset_RetrieveRandomPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Offset,
                 OffsetPagination = new OffsetPaginationRequest
@@ -290,7 +281,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Offset: Last Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Offset_RetrieveLastPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Offset,
                 OffsetPagination = new OffsetPaginationRequest
@@ -309,7 +300,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Cursor: First Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Cursor_RetrieveFirstPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Cursor,
                 CursorPagination = new CursorPaginationRequest
@@ -324,7 +315,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Cursor: Middle Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Cursor_RetrieveRandomPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Cursor,
                 CursorPagination = new CursorPaginationRequest
@@ -339,7 +330,7 @@ namespace BenchmarkSuite
         [Benchmark(Description = "Cursor: Last Page")]
         public async Task<ActionResult<ListResponseDTO<UserDTO>>> Cursor_RetrieveLastPage()
         {
-            var request = new RequestDTO
+            var request = new ListRequestDTO
             {
                 PaginationType = PaginationType.Cursor,
                 CursorPagination = new CursorPaginationRequest
@@ -373,7 +364,7 @@ namespace BenchmarkSuite
                 else
                     page = _random.Next(Math.Max(1, _totalPages - 10), _totalPages + 1);
 
-                return new RequestDTO
+                return new ListRequestDTO
                 {
                     PaginationType = PaginationType.Offset,
                     OffsetPagination = new OffsetPaginationRequest
@@ -403,7 +394,7 @@ namespace BenchmarkSuite
                 else
                     cursor = _random.Next(Math.Max(0, _totalRecords - 500), _totalRecords - PageSize);
 
-                return new RequestDTO
+                return new ListRequestDTO
                 {
                     PaginationType = PaginationType.Cursor,
                     CursorPagination = new CursorPaginationRequest
@@ -424,7 +415,7 @@ namespace BenchmarkSuite
 
                 if (useOffset)
                 {
-                    return new RequestDTO
+                    return new ListRequestDTO
                     {
                         PaginationType = PaginationType.Offset,
                         OffsetPagination = new OffsetPaginationRequest
@@ -436,7 +427,7 @@ namespace BenchmarkSuite
                 }
                 else
                 {
-                    return new RequestDTO
+                    return new ListRequestDTO
                     {
                         PaginationType = PaginationType.Cursor,
                         CursorPagination = new CursorPaginationRequest

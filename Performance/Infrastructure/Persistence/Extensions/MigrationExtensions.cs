@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Performance.Infrastructure.Extensions
+namespace Performance.Infrastructure.Persistence.Extensions
 {
     public static class MigrationExtensions
     {

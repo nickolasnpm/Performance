@@ -8,7 +8,7 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
 
-namespace Performance.Domain.Services
+namespace Performance.Application.Services
 {
     public class UserServices (IUnitOfWork unitOfWork)
         : IUserServices

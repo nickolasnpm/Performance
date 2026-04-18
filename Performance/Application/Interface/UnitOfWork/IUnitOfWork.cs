@@ -1,5 +1,5 @@
 ﻿using Performance.Application.Interface.Repository;
-using Performance.Infrastructure.Repositories;
+using Performance.Infrastructure.Persistence.Repositories;
 
 namespace Performance.Application.Interface.UnitOfWork
 {

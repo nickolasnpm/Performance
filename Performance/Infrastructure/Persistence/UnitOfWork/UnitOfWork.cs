@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Performance.Application.Common.Settings;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Infrastructure.Repositories;
+using Performance.Infrastructure.Persistence.Repositories;
 
-namespace Performance.Infrastructure.UnitOfWork
+namespace Performance.Infrastructure.Persistence.UnitOfWork
 {
     public class UnitOfWork(UserDbContext context, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUnitOfWork

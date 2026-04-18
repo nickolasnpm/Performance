@@ -7,12 +7,12 @@ using Performance.Application.Common.Settings;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
+using Performance.Application.Services;
 using Performance.Domain.Entity;
-using Performance.Domain.Services;
 using Performance.Infrastructure;
-using Performance.Infrastructure.Extensions;
-using Performance.Infrastructure.Repositories;
-using Performance.Infrastructure.UnitOfWork;
+using Performance.Infrastructure.Persistence.Extensions;
+using Performance.Infrastructure.Persistence.Repositories;
+using Performance.Infrastructure.Persistence.UnitOfWork;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);

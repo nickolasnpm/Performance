@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
-using Performance.Infrastructure.Repositories;
+using Performance.Infrastructure.Persistence.Repositories;
 
 namespace IntegrationTest;
 

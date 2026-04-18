@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Performance.Domain.Entity;
 
-namespace Performance.Infrastructure
+namespace Performance.Infrastructure.Persistence
 {
     public class UserDbContext (DbContextOptions options) : DbContext(options)
     {

@@ -2,14 +2,13 @@
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
-using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Repository;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Repository;
 using Performance.Domain.Entity;
 using Performance.Infrastructure.Caching;
 
-namespace Performance.Infrastructure.Repositories
+namespace Performance.Infrastructure.Persistence.Repositories
 {
     public class UserRepositories (UserDbContext userDbContext, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUserRepositories
