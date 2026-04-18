@@ -9,7 +9,7 @@ using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
 using Performance.Application.Services;
 using Performance.Domain.Entity;
-using Performance.Infrastructure;
+using Performance.Infrastructure.Persistence;
 using Performance.Infrastructure.Persistence.Extensions;
 using Performance.Infrastructure.Persistence.Repositories;
 using Performance.Infrastructure.Persistence.UnitOfWork;
