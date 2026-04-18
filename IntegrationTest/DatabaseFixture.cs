@@ -1,7 +1,7 @@
 using DotNet.Testcontainers.Builders;
 using Microsoft.EntityFrameworkCore;
 using Performance.Domain.Entity;
-using Performance.Infrastructure;
+using Performance.Infrastructure.Persistence;
 using Testcontainers.MsSql;
 
 namespace IntegrationTest
