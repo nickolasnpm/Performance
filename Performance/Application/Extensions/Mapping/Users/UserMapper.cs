@@ -6,14 +6,15 @@ using Performance.Application.Extensions.Mapping.Roles;
 using Performance.Application.Extensions.Mapping.Loans;
 using Performance.Application.Extensions.Mapping.SupportTickets;
 using Performance.Domain.Entity;
+using Performance.Application.Interface.Hashing;
 
 namespace Performance.Application.Extensions.Mapping.Users
 {
     public static class UserMapper
     {
-        public static UserDTO EntityToDTO(User user) => new()
+        public static UserDTO EntityToDTO(User user, IIdHelper idHelper) => new()
         {
-            Id = user.Id,
+            Id = idHelper.EncodeId(user.Id),
             Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,
@@ -24,12 +25,12 @@ namespace Performance.Application.Extensions.Mapping.Users
             IsEmailVerified = user.IsEmailVerified,
             IsActive = user.IsActive,
             LastLoginAt = user.LastLoginAt,
-            Address = user.Address?.Map(AddressMapper.ToDTO) ?? null,
-            Roles = user.Roles?.Map(RoleMapper.ToDTO).ToList() ?? null,
-            BankAccount = user.BankAccount?.Map(BankAccountMapper.ToDTO) ?? null,
-            CreditCards = user.CreditCards?.Map(CreditCardMapper.ToDTO) ?? null,
-            Loans = user.Loans?.Map(LoanMapper.ToDTO).ToList() ?? null,
-            SupportTickets = user.SupportTickets?.Map(SupportTicketMapper.ToDTO) ?? null
+            Address = user.Address?.Map(a => AddressMapper.ToDTO(a, idHelper)) ?? null,
+            Roles = user.Roles?.Map(r => RoleMapper.ToDTO(r, idHelper)).ToList() ?? null,
+            BankAccount = user.BankAccount?.Map(b => BankAccountMapper.ToDTO(b, idHelper)) ?? null,
+            CreditCards = user.CreditCards?.Map(c => CreditCardMapper.ToDTO(c, idHelper)) ?? null,
+            Loans = user.Loans?.Map(l => LoanMapper.ToDTO(l, idHelper)).ToList() ?? null,
+            SupportTickets = user.SupportTickets?.Map(s => SupportTicketMapper.ToDTO(s, idHelper)) ?? null
         };
 
         public static User AddRequestToEntity(AddUserRequestDTO request) => new()

@@ -1,13 +1,14 @@
 using Performance.Application.DTOs.CreditCardStatements;
+using Performance.Application.Interface.Hashing;
 using Performance.Domain.Entity;
 
 namespace Performance.Application.Extensions.Mapping.CreditCardStatements
 {
     public static class CreditCardStatementMapper
     {
-        public static CreditCardStatementDTO ToDTO(CreditCardStatement statement) => new()
+        public static CreditCardStatementDTO ToDTO(CreditCardStatement statement, IIdHelper idHelper) => new()
         {
-            Id = statement.Id,
+            Id = idHelper.EncodeId(statement.Id),
             StatementDate = statement.StatementDate,
             DueDate = statement.DueDate,
             StatementBalance = statement.StatementBalance,

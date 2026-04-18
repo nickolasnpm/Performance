@@ -5,9 +5,9 @@ namespace Performance.Application.DTOs.SupportTicketComments
 {
     public class SupportTicketCommentDTO
     {
-        public long Id { get; set; }
+        public required string Id { get; set; }
         public required string CommentText { get; set; }
         public required string RecommendedAction { get; set; }
-        public long TicketId { get; set; }
+        public required string TicketId { get; set; }
     }
 }

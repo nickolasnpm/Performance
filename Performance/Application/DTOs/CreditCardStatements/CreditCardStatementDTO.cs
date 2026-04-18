@@ -2,7 +2,7 @@ namespace Performance.Application.DTOs.CreditCardStatements
 {
     public class CreditCardStatementDTO
     {
-        public long Id { get; set; }
+        public required string Id { get; set; }
         public DateTime StatementDate { get; set; }
         public DateTime DueDate { get; set; }
         public decimal StatementBalance { get; set; }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
 using Performance.API.Exceptions;
 using Performance.Application.Common.Settings;
+using Performance.Application.Interface.Hashing;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
@@ -13,6 +14,7 @@ using Performance.Infrastructure.Persistence;
 using Performance.Infrastructure.Persistence.Extensions;
 using Performance.Infrastructure.Persistence.Repositories;
 using Performance.Infrastructure.Persistence.UnitOfWork;
+using Performance.Infrastructure.Security;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,15 +35,18 @@ builder.Services.AddDbContextPool<UserDbContext>(options =>
             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "Performance");
         }
     )
-    .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+    // .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
 );
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
+builder.Services.Configure<IdHashingSettings>(builder.Configuration.GetSection("IdHashing"));
 
 builder.Services.AddScoped<IUserServices, UserServices>();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepositories, UserRepositories>();
+builder.Services.AddScoped<IIdHelper, IdHelper>();
 
 var modelBuilder = new ODataConventionModelBuilder();
 modelBuilder.EntitySet<User>("UsersOData");

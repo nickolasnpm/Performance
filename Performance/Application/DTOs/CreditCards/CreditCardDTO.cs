@@ -4,7 +4,7 @@ namespace Performance.Application.DTOs.CreditCards
 {
     public class CreditCardDTO
     {
-        public long Id { get; set; }
+        public required string Id { get; set; }
         public required string CardNumber { get; set; }
         public required string CardHolderName { get; set; }
         public required string CardProvider { get; set; }
@@ -13,7 +13,7 @@ namespace Performance.Application.DTOs.CreditCards
         public int ExpiryYear { get; set; }
         public bool IsDefault { get; set; }
         public decimal CreditLimit { get; set; }
-        public long UserId { get; set; }
+        public required string UserId { get; set; }
         public List<CreditCardStatementDTO>? Statements { get; set; }
     }
 }

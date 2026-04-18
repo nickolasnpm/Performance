@@ -1,18 +1,19 @@
 using Performance.Application.DTOs.LoanRepayments;
+using Performance.Application.Interface.Hashing;
 using Performance.Domain.Entity;
 
 namespace Performance.Application.Extensions.Mapping.LoanRepayments
 {
     public static class LoanRepaymentMapper
     {
-        public static LoanRepaymentDTO ToDTO(LoanRepayment loanRepayment) => new()
+        public static LoanRepaymentDTO ToDTO(LoanRepayment loanRepayment, IIdHelper idHelper) => new()
         {
-            Id = loanRepayment.Id,
+            Id = idHelper.EncodeId(loanRepayment.Id),
             ScheduledDate = loanRepayment.ScheduledDate,
             ActualPaymentDate = loanRepayment.ActualPaymentDate,
             ScheduledAmount = loanRepayment.ScheduledAmount,
             PaidAmount = loanRepayment.PaidAmount,
-            LoanId = loanRepayment.LoanId,
+            LoanId = idHelper.EncodeId(loanRepayment.LoanId),
         };
     }
 }

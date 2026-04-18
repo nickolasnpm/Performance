@@ -1,5 +1,4 @@
-﻿using Performance.Application;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace Performance.Infrastructure.Caching
 {
