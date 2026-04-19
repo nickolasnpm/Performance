@@ -25,7 +25,7 @@ namespace Performance.API.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] long id)
+        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] string id)
         {
             var result = await userServices.GetByIdAsync(id);
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);

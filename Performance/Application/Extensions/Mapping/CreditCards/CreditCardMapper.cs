@@ -1,3 +1,4 @@
+using Performance.Application.Common.Prefix;
 using Performance.Application.DTOs.CreditCards;
 using Performance.Application.Extensions.Mapping.CreditCardStatements;
 using Performance.Application.Interface.Hashing;
@@ -9,7 +10,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
     {
         public static CreditCardDTO ToDTO(CreditCard creditCard, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(creditCard.Id),
+            Id = idHelper.EncodeId(creditCard.Id, IdPrefix.CreditCard),
             CardNumber = creditCard.CardNumber,
             CardHolderName = creditCard.CardHolderName,
             CardProvider = creditCard.CardProvider,
@@ -18,7 +19,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
             ExpiryYear = creditCard.ExpiryYear,
             IsDefault = creditCard.IsDefault,
             CreditLimit = creditCard.CreditLimit,
-            UserId = idHelper.EncodeId(creditCard.UserId),
+            UserId = idHelper.EncodeId(creditCard.UserId, IdPrefix.User),
             Statements = creditCard.Statements?.Map(cc => CreditCardStatementMapper.ToDTO(cc, idHelper)).ToList() ?? null
         };
     }

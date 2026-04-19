@@ -7,6 +7,7 @@ using Performance.Application.Extensions.Mapping.Loans;
 using Performance.Application.Extensions.Mapping.SupportTickets;
 using Performance.Domain.Entity;
 using Performance.Application.Interface.Hashing;
+using Performance.Application.Common.Prefix;
 
 namespace Performance.Application.Extensions.Mapping.Users
 {
@@ -14,7 +15,7 @@ namespace Performance.Application.Extensions.Mapping.Users
     {
         public static UserDTO EntityToDTO(User user, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(user.Id),
+            Id = idHelper.EncodeId(user.Id, IdPrefix.User),
             Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,

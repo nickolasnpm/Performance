@@ -1,5 +1,4 @@
 ﻿using Performance.Application.Common.Models;
-using Performance.Application.DTOs.Users;
 
 namespace Performance.Application.Interface.Services
 {
@@ -8,6 +7,6 @@ namespace Performance.Application.Interface.Services
         where TRequest : class
     {
         Task<Result<ListResponseDTO<TResponse>, ResultError>> GetPaginatedListAsync(TRequest request);
-        Task<Result<TResponse, ResultError>> GetByIdAsync(long Id);
+        Task<Result<TResponse, ResultError>> GetByIdAsync(string hashId);
     }
 }

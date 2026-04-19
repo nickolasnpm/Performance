@@ -1,5 +1,5 @@
-// Infrastructure/Security/IdHelper.cs
 using System.Buffers.Text;
+using System.Text;
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Settings;
 using Performance.Application.Interface.Hashing;
@@ -8,28 +8,45 @@ namespace Performance.Infrastructure.Security
 {
     public class IdHelper(IOptions<IdHashingSettings> idHashingSettings) : IIdHelper
     {
+        private const ulong SplitMix64ShuffleMul1   = 0xbf58476d1ce4e5b9UL;
+        private const ulong SplitMix64ShuffleMul2   = 0x94d049bb133111ebUL;
+        private const ulong SplitMix64UnshuffleMul1 = 0x319642b2d24d8ec3UL;
+        private const ulong SplitMix64UnshuffleMul2 = 0x96de1b173f119089UL;
+
         private readonly byte[] _key = ValidateAndGetKey(idHashingSettings.Value);
 
-        public string EncodeId(long id)
+        public string EncodeId(long id, string prefix)
         {
-            var shuffled = ShuffleId(id);
-            var idBytes = BitConverter.GetBytes(shuffled);
-            var obfuscatedBytes = ObfuscateId(idBytes);
-            return Base64Url.EncodeToString(obfuscatedBytes);
+            if (string.IsNullOrWhiteSpace(prefix))
+                throw new ArgumentException("Prefix cannot be null or empty.");
+
+            var prefixBytes = Encoding.UTF8.GetBytes(prefix);
+            var idBytes = BitConverter.GetBytes(ShuffleId(id));
+
+            for (int i = 0; i < prefixBytes.Length; i++)
+                idBytes[i % idBytes.Length] ^= prefixBytes[i];
+
+            return Base64Url.EncodeToString(ObfuscateBytes(idBytes));
         }
 
-        public long DecodeId(string encodedId)
+        public long DecodeId(string encodedId, string expectedPrefix)
         {
             if (string.IsNullOrEmpty(encodedId))
                 throw new ArgumentException("Encoded ID cannot be null or empty.");
 
-            var obfuscatedBytes = Base64Url.DecodeFromChars(encodedId);
-            var idBytes = ObfuscateId(obfuscatedBytes);
-            var shuffled = BitConverter.ToInt64(idBytes);
-            return UnshuffleId(shuffled);
+            if (string.IsNullOrWhiteSpace(expectedPrefix))
+                throw new ArgumentException("Expected prefix cannot be null or empty.");
+
+            var idBytes = ObfuscateBytes(Base64Url.DecodeFromChars(encodedId));
+            var prefixBytes = Encoding.UTF8.GetBytes(expectedPrefix);
+
+            for (int i = 0; i < prefixBytes.Length; i++)
+                idBytes[i % idBytes.Length] ^= prefixBytes[i];
+
+            return UnshuffleId(BitConverter.ToInt64(idBytes));
         }
 
-        private byte[] ObfuscateId(byte[] bytes)
+        private byte[] ObfuscateBytes(byte[] bytes)
         {
             var result = new byte[bytes.Length];
             for (int i = 0; i < bytes.Length; i++)
@@ -39,20 +56,20 @@ namespace Performance.Infrastructure.Security
 
         private static long ShuffleId(long id)
         {
-            var unsigned = (ulong)id;
-            unsigned = ((unsigned >> 16) ^ unsigned) * 0x45d9f3b37197344dUL;
-            unsigned = ((unsigned >> 16) ^ unsigned) * 0x45d9f3b37197344dUL;
-            unsigned = (unsigned >> 16) ^ unsigned;
-            return (long)unsigned;
+            var u = (ulong)id;
+            u ^= u >> 30; u *= SplitMix64ShuffleMul1;
+            u ^= u >> 27; u *= SplitMix64ShuffleMul2;
+            u ^= u >> 31;
+            return (long)u;
         }
 
         private static long UnshuffleId(long id)
         {
-            var unsigned = (ulong)id;
-            unsigned = ((unsigned >> 16) ^ unsigned) * 0x119de1f3a44d61b3UL;
-            unsigned = ((unsigned >> 16) ^ unsigned) * 0x119de1f3a44d61b3UL;
-            unsigned = (unsigned >> 16) ^ unsigned;
-            return (long)unsigned;
+            var u = (ulong)id;
+            u ^= (u >> 31) ^ (u >> 62); u *= SplitMix64UnshuffleMul1;
+            u ^= (u >> 27) ^ (u >> 54); u *= SplitMix64UnshuffleMul2;
+            u ^= (u >> 30) ^ (u >> 60);
+            return (long)u;
         }
 
         private static byte[] ValidateAndGetKey(IdHashingSettings settings)
@@ -60,12 +77,7 @@ namespace Performance.Infrastructure.Security
             if (string.IsNullOrEmpty(settings.Key))
                 throw new InvalidOperationException("IdHashing key is not configured.");
 
-            var key = Convert.FromBase64String(settings.Key);
-
-            if (key.Length < 16)
-                throw new InvalidOperationException("Key must be at least 16 bytes (128-bit).");
-
-            return key;
+            return Convert.FromBase64String(settings.Key);
         }
     }
 }

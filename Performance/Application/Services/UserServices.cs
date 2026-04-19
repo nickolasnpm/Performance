@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
+using Performance.Application.Common.Prefix;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Mapping;
 using Performance.Application.Extensions.Mapping.Users;
@@ -40,8 +41,10 @@ namespace Performance.Application.Services
             }
         }
 
-        public async Task<Result<UserDTO, ResultError>> GetByIdAsync(long id)
+        public async Task<Result<UserDTO, ResultError>> GetByIdAsync(string hashId)
         {
+            var id = idHelper.DecodeId(hashId, IdPrefix.User);
+            
             var user = await unitOfWork.UserRepository.GetAll()
                 .Where(u => u.Id == id)
                 .Select(u => UserMapper.EntityToDTO(u, idHelper))

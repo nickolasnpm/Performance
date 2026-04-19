@@ -1,3 +1,4 @@
+using Performance.Application.Common.Prefix;
 using Performance.Application.DTOs.CreditCardStatements;
 using Performance.Application.Interface.Hashing;
 using Performance.Domain.Entity;
@@ -8,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCardStatements
     {
         public static CreditCardStatementDTO ToDTO(CreditCardStatement statement, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(statement.Id),
+            Id = idHelper.EncodeId(statement.Id, IdPrefix.CreditCardStatement),
             StatementDate = statement.StatementDate,
             DueDate = statement.DueDate,
             StatementBalance = statement.StatementBalance,
@@ -16,7 +17,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCardStatements
             PaymentsReceived = statement.PaymentsReceived,
             InterestCharged = statement.InterestCharged,
             AvailableCredit = statement.AvailableCredit,
-            CreditCardId = statement.CreditCardId
+            CreditCardId = idHelper.EncodeId(statement.CreditCardId, IdPrefix.CreditCard)
         };
     }
 }
