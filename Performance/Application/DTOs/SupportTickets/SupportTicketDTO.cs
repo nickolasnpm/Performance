@@ -9,7 +9,6 @@ namespace Performance.Application.DTOs.SupportTickets
         public required string Description { get; set; }
         public int Priority { get; set; }
         public bool IsResolved { get; set; }
-        public required string UserId { get; set; }
         public List<SupportTicketCommentDTO>? Comments { get; set; }
     }
 }

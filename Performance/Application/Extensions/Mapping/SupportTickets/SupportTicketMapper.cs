@@ -1,4 +1,3 @@
-using Performance.Application.Common.Prefix;
 using Performance.Application.DTOs.SupportTickets;
 using Performance.Application.Extensions.Mapping.SupportTicketComments;
 using Performance.Application.Interface.Hashing;
@@ -10,12 +9,11 @@ namespace Performance.Application.Extensions.Mapping.SupportTickets
     {
         public static SupportTicketDTO ToDTO(SupportTicket supportTicket, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(supportTicket.Id, IdPrefix.SupportTicket),
+            Id = idHelper.EncodeId(supportTicket.Id),
             Subject = supportTicket.Subject,
             Description = supportTicket.Description,
             Priority = supportTicket.Priority,
             IsResolved = supportTicket.IsResolved,
-            UserId = idHelper.EncodeId(supportTicket.UserId, IdPrefix.User),
             Comments = supportTicket.Comments?.Map(cmt => SupportTicketCommentMapper.ToDTO(cmt, idHelper)) ?? null
         };
     }

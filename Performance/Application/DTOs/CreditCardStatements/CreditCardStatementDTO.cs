@@ -10,6 +10,5 @@ namespace Performance.Application.DTOs.CreditCardStatements
         public decimal PaymentsReceived { get; set; }
         public decimal InterestCharged { get; set; }
         public decimal AvailableCredit { get; set; }
-        public required string CreditCardId { get; set; }
     }
 }

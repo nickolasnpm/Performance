@@ -40,7 +40,7 @@ builder.Services.AddDbContextPool<UserDbContext>(options =>
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
-builder.Services.Configure<IdHashingSettings>(builder.Configuration.GetSection("IdHashing"));
+builder.Services.Configure<IdEncryptionSettings>(builder.Configuration.GetSection("IdEncryptionSettings"));
 
 builder.Services.AddScoped<IUserServices, UserServices>();
 

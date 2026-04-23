@@ -15,7 +15,6 @@ namespace Performance.Application.DTOs.Loans
         public int RemainingLoanTerms { get; set; }
         public decimal MonthlyPaymentAmount { get; set; }
         public bool IsFullyPaid { get; set; } = false;
-        public required string UserId { get; set; }
         public List<LoanRepaymentDTO>? Repayments { get; set; }
     }
 }

@@ -13,7 +13,6 @@ namespace Performance.Application.DTOs.CreditCards
         public int ExpiryYear { get; set; }
         public bool IsDefault { get; set; }
         public decimal CreditLimit { get; set; }
-        public required string UserId { get; set; }
         public List<CreditCardStatementDTO>? Statements { get; set; }
     }
 }

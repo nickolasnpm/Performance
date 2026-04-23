@@ -7,6 +7,5 @@ namespace Performance.Application.DTOs.LoanRepayments
         public DateTime? ActualPaymentDate { get; set; }
         public decimal ScheduledAmount { get; set; }
         public decimal PaidAmount { get; set; }
-        public required string LoanId { get; set; }
     }
 }

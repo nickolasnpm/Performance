@@ -1,4 +1,3 @@
-using Performance.Application.Common.Prefix;
 using Performance.Application.DTOs.Loans;
 using Performance.Application.Extensions.Mapping.LoanRepayments;
 using Performance.Application.Interface.Hashing;
@@ -10,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.Loans
     {
         public static LoanDTO ToDTO(Loan loan, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(loan.Id, IdPrefix.Loan),
+            Id = idHelper.EncodeId(loan.Id),
             LoanType = loan.LoanType,
             PrincipalAmount = loan.PrincipalAmount,
             InterestRate = loan.InterestRate,
@@ -21,7 +20,6 @@ namespace Performance.Application.Extensions.Mapping.Loans
             RemainingLoanTerms = loan.RemainingLoanTerms,
             MonthlyPaymentAmount = loan.MonthlyPaymentAmount,
             IsFullyPaid = loan.IsFullyPaid,
-            UserId = idHelper.EncodeId(loan.UserId, IdPrefix.User),
             Repayments = loan.Repayments?.Map(lr => LoanRepaymentMapper.ToDTO(lr, idHelper)) ?? null
         };
     }

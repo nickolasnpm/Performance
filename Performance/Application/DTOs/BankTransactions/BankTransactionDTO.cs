@@ -13,6 +13,5 @@ namespace Performance.Application.DTOs.BankTransactions
         public int Status { get; set; }
         public required string MerchantName { get; set; }
         public required string ReferenceNumber { get; set; }
-        public required string BankAccountId { get; set; }
     }
 }
