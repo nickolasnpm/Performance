@@ -9,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.SupportTickets
     {
         public static SupportTicketDTO ToDTO(SupportTicket supportTicket, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(supportTicket.Id),
+            Id = idHelper.EncryptId(supportTicket.Id),
             Subject = supportTicket.Subject,
             Description = supportTicket.Description,
             Priority = supportTicket.Priority,

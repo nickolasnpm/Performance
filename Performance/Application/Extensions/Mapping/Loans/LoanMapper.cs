@@ -9,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.Loans
     {
         public static LoanDTO ToDTO(Loan loan, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(loan.Id),
+            Id = idHelper.EncryptId(loan.Id),
             LoanType = loan.LoanType,
             PrincipalAmount = loan.PrincipalAmount,
             InterestRate = loan.InterestRate,

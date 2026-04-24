@@ -8,7 +8,7 @@ namespace Performance.Application.Extensions.Mapping.SupportTicketComments
     {
         public static SupportTicketCommentDTO ToDTO(SupportTicketComment comment, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(comment.Id),
+            Id = idHelper.EncryptId(comment.Id),
             CommentText = comment.CommentText,
             RecommendedAction = comment.RecommendedAction
         };

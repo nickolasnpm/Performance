@@ -14,7 +14,7 @@ namespace Performance.Application.Extensions.Mapping.Users
     {
         public static UserDTO EntityToDTO(User user, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(user.Id),
+            Id = idHelper.EncryptId(user.Id),
             Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,

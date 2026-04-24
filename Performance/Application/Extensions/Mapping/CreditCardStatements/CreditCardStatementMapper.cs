@@ -8,7 +8,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCardStatements
     {
         public static CreditCardStatementDTO ToDTO(CreditCardStatement statement, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(statement.Id),
+            Id = idHelper.EncryptId(statement.Id),
             StatementDate = statement.StatementDate,
             DueDate = statement.DueDate,
             StatementBalance = statement.StatementBalance,

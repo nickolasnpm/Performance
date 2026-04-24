@@ -8,7 +8,7 @@ namespace Performance.Application.Extensions.Mapping.LoanRepayments
     {
         public static LoanRepaymentDTO ToDTO(LoanRepayment loanRepayment, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(loanRepayment.Id),
+            Id = idHelper.EncryptId(loanRepayment.Id),
             ScheduledDate = loanRepayment.ScheduledDate,
             ActualPaymentDate = loanRepayment.ActualPaymentDate,
             ScheduledAmount = loanRepayment.ScheduledAmount,

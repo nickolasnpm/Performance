@@ -9,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.CreditCards
     {
         public static CreditCardDTO ToDTO(CreditCard creditCard, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(creditCard.Id),
+            Id = idHelper.EncryptId(creditCard.Id),
             CardNumber = creditCard.CardNumber,
             CardHolderName = creditCard.CardHolderName,
             CardProvider = creditCard.CardProvider,

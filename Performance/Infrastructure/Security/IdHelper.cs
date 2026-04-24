@@ -14,7 +14,7 @@ public sealed class IdHelper(IOptions<IdEncryptionSettings> idHashingSettings) :
 
     private readonly byte[] _key = GetKey(idHashingSettings.Value);
 
-    public string EncodeId(long id)
+    public string EncryptId(long id)
     {
         Span<byte> nonce = stackalloc byte[NonceSize];
         Span<byte> plain = stackalloc byte[IdSize];
@@ -35,7 +35,7 @@ public sealed class IdHelper(IOptions<IdEncryptionSettings> idHashingSettings) :
         return Base64Url.EncodeToString(output);
     }
 
-    public long DecodeId(string encodedId)
+    public long DecryptId(string encodedId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(encodedId);
 

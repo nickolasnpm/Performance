@@ -42,7 +42,7 @@ namespace Performance.Application.Services
 
         public async Task<Result<UserDTO, ResultError>> GetByIdAsync(string hashId)
         {
-            var id = idHelper.DecodeId(hashId);
+            var id = idHelper.DecryptId(hashId);
             
             var user = await unitOfWork.UserRepository.GetAll()
                 .Where(u => u.Id == id)

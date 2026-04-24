@@ -9,7 +9,7 @@ namespace Performance.Application.Extensions.Mapping.BankAccounts
     {
         public static BankAccountDTO ToDTO(BankAccount bankAccount, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(bankAccount.Id),
+            Id = idHelper.EncryptId(bankAccount.Id),
             AccountNumber = bankAccount.AccountNumber,
             CurrentBalance = bankAccount.CurrentBalance,
             AvailableBalance = bankAccount.AvailableBalance,

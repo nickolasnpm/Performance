@@ -8,7 +8,7 @@ namespace Performance.Application.Extensions.Mapping.Addresses
     {
         public static AddressDTO ToDTO(Address address, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(address.Id),
+            Id = idHelper.EncryptId(address.Id),
             AddressLine = address.AddressLine,
             City = address.City,
             State = address.State,

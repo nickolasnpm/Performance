@@ -8,7 +8,7 @@ namespace Performance.Application.Extensions.Mapping.BankTransactions
     {
         public static BankTransactionDTO ToDTO(BankTransaction bankTransaction, IIdHelper idHelper) => new()
         {
-            Id = idHelper.EncodeId(bankTransaction.Id),
+            Id = idHelper.EncryptId(bankTransaction.Id),
             BaseAmount = bankTransaction.BaseAmount,
             FeeAmount = bankTransaction.FeeAmount,
             SettlementAmount = bankTransaction.SettlementAmount,
