@@ -26,7 +26,7 @@ namespace Performance.Application.Extensions.Repository.EntityIncludeOptions
         {
             if (Roles) query = query.Include(u => u.Roles);
             if (Address) query = query.Include(u => u.Address);
-            if (BankAccount) query = query.Include(u => u.BankAccount).ThenInclude(ba => ba.Transactions);
+            if (BankAccount) query = query.Include(u => u.BankAccount).ThenInclude(ba => ba != null ? ba.Transactions : null);
             if (CreditCards) query = query.Include(u => u.CreditCards).ThenInclude(cc => cc.Statements);
             if (Loans) query = query.Include(u => u.Loans).ThenInclude(l => l.Repayments);
             if (SupportTickets) query = query.Include(u => u.SupportTickets).ThenInclude(st => st.Comments);
