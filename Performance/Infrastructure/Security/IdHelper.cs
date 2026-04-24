@@ -2,7 +2,7 @@ using System.Buffers.Text;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Settings;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 
 namespace Performance.Infrastructure.Security;
 

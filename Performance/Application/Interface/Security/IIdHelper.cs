@@ -1,4 +1,4 @@
-namespace Performance.Application.Interface.Hashing
+namespace Performance.Application.Interface.Security
 {
     public interface IIdHelper
     {
