@@ -1,5 +1,5 @@
 using Performance.Application.DTOs.CreditCardStatements;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 using Performance.Domain.Entity;
 
 namespace Performance.Application.Extensions.Mapping.CreditCardStatements

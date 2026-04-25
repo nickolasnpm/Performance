@@ -5,7 +5,7 @@ using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Mapping;
 using Performance.Application.Extensions.Mapping.Users;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
 

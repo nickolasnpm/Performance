@@ -6,7 +6,7 @@ using Performance.Application.Extensions.Mapping.Roles;
 using Performance.Application.Extensions.Mapping.Loans;
 using Performance.Application.Extensions.Mapping.SupportTickets;
 using Performance.Domain.Entity;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 
 namespace Performance.Application.Extensions.Mapping.Users
 {

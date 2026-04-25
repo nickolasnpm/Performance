@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
 using Performance.API.Exceptions;
 using Performance.Application.Common.Settings;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Repository;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;

@@ -1,6 +1,6 @@
 using Performance.Application.DTOs.BankAccounts;
 using Performance.Application.Extensions.Mapping.BankTransactions;
-using Performance.Application.Interface.Hashing;
+using Performance.Application.Interface.Security;
 using Performance.Domain.Entity;
 
 namespace Performance.Application.Extensions.Mapping.BankAccounts
