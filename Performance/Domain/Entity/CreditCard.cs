@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Performance.Domain.Entity
 {
     [Index(nameof(CardNumber), IsUnique = true)]
-    public class CreditCard : BaseModel
+    public class CreditCard : AuditableEntity
     {
         [StringLength(50)]
         public required string CardNumber { get; set; }

@@ -41,11 +41,7 @@ namespace Performance.Application.Extensions.Mapping.Users
             LastName = request.LastName,
             DateOfBirth = request.DateOfBirth,
             PhoneNumber = request.PhoneNumber,
-            ProfilePictureUrl = request.ProfilePictureUrl,
-            CreatedAt = DateTimeOffset.Now,
-            CreatedBy = "system",
-            UpdatedAt = DateTimeOffset.Now,
-            UpdatedBy = "system"
+            ProfilePictureUrl = request.ProfilePictureUrl
         };
 
         public static void UpdateRequestToEntity(User existingUser, UpdateUserRequestDTO request)
@@ -55,8 +51,6 @@ namespace Performance.Application.Extensions.Mapping.Users
             existingUser.DateOfBirth = request.DateOfBirth ?? existingUser.DateOfBirth;
             existingUser.PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber;
             existingUser.ProfilePictureUrl = request.ProfilePictureUrl ?? existingUser.ProfilePictureUrl;
-            existingUser.UpdatedAt = DateTimeOffset.Now;
-            existingUser.UpdatedBy = "system";
         }
     }
 }

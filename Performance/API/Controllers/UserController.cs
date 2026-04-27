@@ -32,36 +32,36 @@ namespace Performance.API.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CreateResultDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> CreateUsers([FromBody] List<AddUserRequestDTO> requestDTOs)
+        public async Task<ActionResult<CreateResultDTO>> CreateUsers([FromBody] List<AddUserRequestDTO> requestDTOs)
         {
             var result = await userServices.CreateUsers(requestDTOs);
-            return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
+            return result.IsSuccess ? StatusCode(201, new CreateResultDTO { IsCreated = result.Data }) : ToProblem(result.Error!);
         }
 
         [HttpPut]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateResultDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> UpdateUsers([FromBody] List<UpdateUserRequestDTO> requestDTOs)
+        public async Task<ActionResult<UpdateResultDTO>> UpdateUsers([FromBody] List<UpdateUserRequestDTO> requestDTOs)
         {
             var result = await userServices.UpdateUsers(requestDTOs);
-            return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
+            return result.IsSuccess ? Ok(new UpdateResultDTO { IsUpdated = result.Data }) : ToProblem(result.Error!);
         }
 
         [HttpDelete]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DeleteResultDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> DeleteUsers([FromBody] HashSet<long> ids)
+        public async Task<ActionResult<DeleteResultDTO>> DeleteUsers([FromBody] HashSet<string> ids)
         {
             var result = await userServices.DeleteUsers(ids);
-            return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
+            return result.IsSuccess ? Ok(new DeleteResultDTO { IsDeleted = result.Data }) : ToProblem(result.Error!);
         }
     }
 }

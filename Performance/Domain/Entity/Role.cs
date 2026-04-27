@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Performance.Domain.Entity
 {
     [Index(nameof(Name), IsUnique = true)]
-    public class Role: BaseModel
+    public class Role: AuditableEntity
     {
         [StringLength(50)]
         public required string Name { get; set; }

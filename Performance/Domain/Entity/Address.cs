@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class Address: BaseModel
+    public class Address: AuditableEntity
     {
         [StringLength(250)]
         public required string AddressLine { get; set; }

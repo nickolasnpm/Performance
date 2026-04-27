@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class CreditCardStatement : BaseModel
+    public class CreditCardStatement : AuditableEntity
     {
         public DateTime StatementDate { get; set; }
         public DateTime DueDate { get; set; }
