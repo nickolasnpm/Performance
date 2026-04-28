@@ -58,7 +58,7 @@ namespace Performance.API.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> DeleteUsers([FromBody] HashSet<long> ids)
+        public async Task<ActionResult<bool>> DeleteUsers([FromBody] HashSet<string> ids)
         {
             var result = await userServices.DeleteUsers(ids);
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);

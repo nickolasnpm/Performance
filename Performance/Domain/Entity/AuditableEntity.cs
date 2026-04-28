@@ -2,16 +2,15 @@
 
 namespace Performance.Domain.Entity
 {
-    public class BaseModel
+    public class AuditableEntity: BaseEntity
     {
-        public long Id { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
 
         [StringLength(50)]
-        public required string CreatedBy { get; set; }
+        public string CreatedBy { get; set; } = null!;
         public DateTimeOffset UpdatedAt { get; set; }
 
         [StringLength(50)]
-        public required string UpdatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
     }
 }

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class BankTransaction: BaseModel
+    public class BankTransaction: AuditableEntity
     {
         [Precision(18, 2)]
         public decimal BaseAmount { get; set; } = decimal.Zero;

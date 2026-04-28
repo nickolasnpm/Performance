@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class SupportTicket: BaseModel
+    public class SupportTicket: AuditableEntity
     {
         [StringLength(500)]
         public required string Subject { get; set; }
