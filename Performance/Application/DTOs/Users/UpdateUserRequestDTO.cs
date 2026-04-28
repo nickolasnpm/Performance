@@ -4,7 +4,7 @@ namespace Performance.Application.DTOs.Users
 {
     public class UpdateUserRequestDTO
     {
-        public required string Id { get; set; }
+        public long Id { get; set; }
 
         [StringLength(100)]
         public string? FirstName { get; set; }

@@ -8,7 +8,6 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Infrastructure.Security;
 
 namespace Performance.Application.Services
 {
@@ -128,10 +127,8 @@ namespace Performance.Application.Services
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
-            
 
-
-            HashSet<long> entityIds = requestDTOs.Select(u => idHelper.DecryptId(u.Id)).ToHashSet();
+            HashSet<long> entityIds = requestDTOs.Select(u => u.Id).ToHashSet();
 
             var existingUsers = await unitOfWork.UserRepository.GetAll()
                 .AsTracking()
@@ -146,32 +143,24 @@ namespace Performance.Application.Services
                 { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);
-            requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[idHelper.DecryptId(dto.Id)], dto));
+            requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[dto.Id], dto));
 
             await unitOfWork.SaveChangesAsync();
 
             return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, ResultError>> DeleteUsers(HashSet<string> ids)
+        public async Task<Result<bool, ResultError>> DeleteUsers(HashSet<long> ids)
         {
             if (ids.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
-            HashSet<long> entityIds = new HashSet<long>();
-
-            foreach (var hashId in ids)
-            {
-                long decryptedId = idHelper.DecryptId(hashId);
-                entityIds.Add(decryptedId);
-            }
-
             var existingIds = await unitOfWork.UserRepository.GetAll()
-                .Where(u => entityIds.Contains(u.Id))
+                .Where(u => ids.Contains(u.Id))
                 .Select(u => u.Id).ToHashSetAsync();
 
-            var notFoundIds = entityIds.Except(existingIds).ToList();
+            var notFoundIds = ids.Except(existingIds).ToList();
 
             if (notFoundIds.Any())
                 return Result<bool, ResultError>.Failure(new ResultError

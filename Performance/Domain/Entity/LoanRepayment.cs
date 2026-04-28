@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class LoanRepayment: AuditableEntity
+    public class LoanRepayment: BaseModel
     {
         public DateTime ScheduledDate { get; set; }
         public DateTime? ActualPaymentDate { get; set; }

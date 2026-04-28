@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Performance.Domain.Entity
 {
-    public class Loan : AuditableEntity
+    public class Loan : BaseModel
     {
         [StringLength(50)]
         public required string LoanType { get; set; }

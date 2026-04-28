@@ -14,16 +14,12 @@ using Performance.Infrastructure.Persistence;
 using Performance.Infrastructure.Persistence.Extensions;
 using Performance.Infrastructure.Persistence.Repositories;
 using Performance.Infrastructure.Persistence.UnitOfWork;
-using Performance.Infrastructure.Persistence.Interceptors;
 using Performance.Infrastructure.Security;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<AuditSaveChangesInterceptor>();
-
-builder.Services.AddDbContextPool<UserDbContext>((sp,options) =>
+builder.Services.AddDbContextPool<UserDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>
@@ -39,8 +35,7 @@ builder.Services.AddDbContextPool<UserDbContext>((sp,options) =>
             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "Performance");
         }
     )
-    .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-    .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>())
+    // .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
 );
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Performance.Domain.Entity
 {
     [Index(nameof(AccountNumber), IsUnique = true)]
-    public class BankAccount : AuditableEntity
+    public class BankAccount : BaseModel
     {
         [StringLength(20)]
         public required string AccountNumber { get; set; }

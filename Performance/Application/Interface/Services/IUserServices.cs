@@ -7,6 +7,6 @@ namespace Performance.Application.Interface.Services
     {
         Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs);
         Task<Result<bool, ResultError>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs);
-        Task<Result<bool, ResultError>> DeleteUsers(HashSet<string> ids);
+        Task<Result<bool, ResultError>> DeleteUsers(HashSet<long> ids);
     }
 }

@@ -5,7 +5,7 @@ namespace Performance.Domain.Entity
 {
     [Index(nameof(Username), IsUnique = true)]
     [Index(nameof(Email), IsUnique = true)]
-    public class User: AuditableEntity
+    public class User: BaseModel
     {
         [StringLength(50)]
         public required string Username { get; set; }
