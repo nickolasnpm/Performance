@@ -17,7 +17,6 @@ stages:
       imageTag: '$(Build.BuildId)'
       rootPath: '$(Build.SourcesDirectory)'
       dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
-      solutionPath: '$(Build.SourcesDirectory)/Performance.slnx'
       unitTestPath: "$(Build.SourcesDirectory)/UnitTest"
       integrationTestPath: "$(Build.SourcesDirectory)/IntegrationTest"
       testResultsPath: "$(Agent.TempDirectory)/TestResults"
@@ -197,7 +196,7 @@ stages:
           - script: |
               snyk test \
                 --severity-threshold=high \
-                --file="$(solutionPath)" \
+                --file="$(Build.SourcesDirectory)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
@@ -207,6 +206,7 @@ stages:
           - script: |
               snyk code test \
                 --severity-threshold=high \
+                "$(Build.SourcesDirectory)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
             displayName: 'Snyk - C# Code Scan (SAST)'
             workingDirectory: '$(Build.SourcesDirectory)'
