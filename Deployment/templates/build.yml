@@ -25,6 +25,7 @@ stages:
       unitCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/unit-coverage.xml"
       integrationTestResultsFile: "$(Agent.TempDirectory)/TestResults/integration-test-results.trx"
       integrationCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/integration-coverage.xml"
+      sarifOutputPath: "$(Agent.TempDirectory)/sarif"
     jobs:
       - job: RunUnitTests
         displayName: 'Run Unit Tests'
@@ -195,53 +196,47 @@ stages:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
 
-          # Create output directory
           - script: |
-              mkdir -p "$(Agent.TempDirectory)/sarif"
+              mkdir -p "$(sarifOutputPath)"
             displayName: 'Create Output Directory'
 
-          # Scan NuGet dependencies for known CVEs
           - script: |
               snyk test \
-                --file="$(Build.SourcesDirectory)" \
-                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-deps.sarif" \
-                || true
+                --severity-threshold=high \
+                --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
             env:
               SnykToken: $(SnykToken)
 
-          # Scan C# code for vulnerabilities (SAST)
           - script: |
               snyk code test \
+                --severity-threshold=high \
                 "$(Build.SourcesDirectory)" \
-                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-code.sarif" \
-                || true
+                --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
             displayName: 'Snyk - C# Code Scan (SAST)'
             env:
               SnykToken: $(SnykToken)
 
-          # Scan Docker image for vulnerabilities
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
+                --severity-threshold=high \
                 --file="$(dockerfilePath)" \
-                --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-container.sarif" \
-                || true
+                --sarif-file-output="$(sarifOutputPath)/snyk-container.sarif"
             displayName: 'Snyk - Docker Image Scan'
             env:
               SnykToken: $(SnykToken)
 
-          # Scan the codebase for secrets
           - script: |
               snyk secrets test \
-                --sarif-file-output=$(Build.ArtifactStagingDirectory)/snyk-secrets.sarif
-            displayName: 'Snyk Secrets Scan'
+                --severity-threshold=high \
+                --sarif-file-output="$(sarifOutputPath)/snyk-secrets.sarif"
+            displayName: 'Snyk - Secrets Scan'
             env:
               SnykToken: $(SnykToken)
 
-          # Publish all SARIF results as artifact
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
             condition: always()
             inputs:
-              pathToPublish: '$(Agent.TempDirectory)/sarif'
+              pathToPublish: '$(sarifOutputPath)'
               artifactName: 'CodeAnalysisLogs'
