@@ -196,7 +196,7 @@ stages:
           - script: |
               snyk test \
                 --severity-threshold=high \
-                --file="$(Build.SourcesDirectory)" \
+                --all-projects \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
