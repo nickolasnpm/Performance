@@ -177,7 +177,7 @@ stages:
                 $(imageTag)
                 latest
 
-- job: SecurityScan
+      - job: SecurityScan
         displayName: 'Security Scan (Snyk)'
         dependsOn:
           - RunIntegrationTests
