@@ -194,24 +194,28 @@ stages:
             displayName: 'Create Output Directory'
 
           - script: |
+              dotnet restore "$(Build.SourcesDirectory)"
+            displayName: 'Restore Dependencies'
+
+          - script: |
               snyk test \
                 --severity-threshold=high \
                 --all-projects \
+                --dotnet-runtime-resolution \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
             env:
-              SnykToken: $(SnykToken)
+              SNYK_TOKEN: $(SnykToken)
 
           - script: |
               snyk code test \
                 --severity-threshold=high \
-                "$(Build.SourcesDirectory)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
             displayName: 'Snyk - C# Code Scan (SAST)'
             workingDirectory: '$(Build.SourcesDirectory)'
             env:
-              SnykToken: $(SnykToken)
+              SNYK_TOKEN: $(SnykToken)
 
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
@@ -220,7 +224,7 @@ stages:
                 --sarif-file-output="$(sarifOutputPath)/snyk-container.sarif"
             displayName: 'Snyk - Docker Image Scan'
             env:
-              SnykToken: $(SnykToken)
+              SNYK_TOKEN: $(SnykToken)
 
           - script: |
               snyk secrets test \
@@ -229,7 +233,7 @@ stages:
             displayName: 'Snyk - Secrets Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
             env:
-              SnykToken: $(SnykToken)
+              SNYK_TOKEN: $(SnykToken)
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
