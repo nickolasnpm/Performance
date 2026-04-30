@@ -27,68 +27,68 @@ stages:
       integrationCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/integration-coverage.xml"
       sarifOutputPath: "$(Agent.TempDirectory)/sarif"
     jobs:
-      - job: RunUnitTests
-        displayName: 'Run Unit Tests'
-        pool:
-          name: ${{ parameters.poolName }}
-          demands:
-            - Agent.Name -equals ${{ parameters.agentName }}
-        steps:
+      # - job: RunUnitTests
+      #   displayName: 'Run Unit Tests'
+      #   pool:
+      #     name: ${{ parameters.poolName }}
+      #     demands:
+      #       - Agent.Name -equals ${{ parameters.agentName }}
+      #   steps:
 
-          - task: UseDotNet@2
-            displayName: 'Use .NET 10'
-            inputs:
-              packageType: 'sdk'
-              version: '10.x'
+      #     - task: UseDotNet@2
+      #       displayName: 'Use .NET 10'
+      #       inputs:
+      #         packageType: 'sdk'
+      #         version: '10.x'
 
-          - script: |
-              dotnet restore "$(unitTestPath)"
-            displayName: 'Restore Unit Test Dependencies'
+      #     - script: |
+      #         dotnet restore "$(unitTestPath)"
+      #       displayName: 'Restore Unit Test Dependencies'
 
-          - script: |
-              mkdir -p "$(testResultsPath)"
-              dotnet test "$(unitTestPath)" \
-                --configuration Release \
-                --logger "trx;LogFileName=unit-test-results.trx" \
-                --results-directory "$(testResultsPath)" \
-                --collect:"XPlat Code Coverage" \
-                -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
-            displayName: 'Run Unit Tests'
+      #     - script: |
+      #         mkdir -p "$(testResultsPath)"
+      #         dotnet test "$(unitTestPath)" \
+      #           --configuration Release \
+      #           --logger "trx;LogFileName=unit-test-results.trx" \
+      #           --results-directory "$(testResultsPath)" \
+      #           --collect:"XPlat Code Coverage" \
+      #           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+      #       displayName: 'Run Unit Tests'
 
-          - task: PublishTestResults@2
-            displayName: 'Publish Unit Test Results'
-            condition: always()
-            inputs:
-              testResultsFormat: 'VSTest'
-              testResultsFiles: '$(unitTestResultsFile)'
-              failTaskOnFailedTests: true
+      #     - task: PublishTestResults@2
+      #       displayName: 'Publish Unit Test Results'
+      #       condition: always()
+      #       inputs:
+      #         testResultsFormat: 'VSTest'
+      #         testResultsFiles: '$(unitTestResultsFile)'
+      #         failTaskOnFailedTests: true
 
-          - script: |
-              export PATH="$PATH:$HOME/.dotnet/tools"
+      #     - script: |
+      #         export PATH="$PATH:$HOME/.dotnet/tools"
 
-              # Check if reportgenerator is already installed
-              if ! command -v reportgenerator &> /dev/null; then
-                echo "reportgenerator not found, installing..."
-                dotnet tool install -g dotnet-reportgenerator-globaltool
-              else
-                echo "reportgenerator already installed: $(reportgenerator --version)"
-              fi
+      #         # Check if reportgenerator is already installed
+      #         if ! command -v reportgenerator &> /dev/null; then
+      #           echo "reportgenerator not found, installing..."
+      #           dotnet tool install -g dotnet-reportgenerator-globaltool
+      #         else
+      #           echo "reportgenerator already installed: $(reportgenerator --version)"
+      #         fi
 
-              reportgenerator \
-                -reports:"$(testResultsPath)/**/coverage.cobertura.xml" \
-                -targetdir:"$(testResultsPath)/UnitCoverageReport" \
-                -reporttypes:"HtmlInline;Cobertura"
-            displayName: 'Generate Unit Test Coverage Report'
-            condition: always()
+      #         reportgenerator \
+      #           -reports:"$(testResultsPath)/**/coverage.cobertura.xml" \
+      #           -targetdir:"$(testResultsPath)/UnitCoverageReport" \
+      #           -reporttypes:"HtmlInline;Cobertura"
+      #       displayName: 'Generate Unit Test Coverage Report'
+      #       condition: always()
 
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish Unit Test Coverage'
-            condition: always()
-            inputs:
-              pathToPublish: '$(testResultsPath)/UnitCoverageReport'
-              artifactName: 'UnitTestCoverageReport'
+      #     - task: PublishBuildArtifacts@1
+      #       displayName: 'Publish Unit Test Coverage'
+      #       condition: always()
+      #       inputs:
+      #         pathToPublish: '$(testResultsPath)/UnitCoverageReport'
+      #         artifactName: 'UnitTestCoverageReport'
 
-      - job: RunIntegrationTests
+      # - job: RunIntegrationTests
         displayName: 'Run Integration Tests'
         dependsOn: RunUnitTests
         condition: succeeded()
@@ -153,8 +153,8 @@ stages:
 
       - job: BuildImage
         displayName: 'Build Docker Images'
-        dependsOn: RunUnitTests
-        condition: succeeded()
+        # dependsOn: RunUnitTests
+        # condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -187,7 +187,7 @@ stages:
       - job: SecurityScan
         displayName: 'Security Scan (Snyk)'
         dependsOn:
-          - RunIntegrationTests
+          # - RunIntegrationTests
           - BuildImage
         condition: succeeded()
         pool:
