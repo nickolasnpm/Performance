@@ -183,7 +183,6 @@ stages:
                 $(imageTag)
                 latest
 
-      # 🔒 Security Scan Job
       - job: SecurityScan
         displayName: 'Security Scan (Snyk)'
         dependsOn:
@@ -228,6 +227,14 @@ stages:
                 --sarif-file-output="$(Agent.TempDirectory)/sarif/snyk-container.sarif" \
                 || true
             displayName: 'Snyk - Docker Image Scan'
+            env:
+              SnykToken: $(SnykToken)
+
+          # Scan the codebase for secrets
+          - script: |
+              snyk secrets test \
+                --sarif-file-output=$(Build.ArtifactStagingDirectory)/snyk-secrets.sarif
+            displayName: 'Snyk Secrets Scan'
             env:
               SnykToken: $(SnykToken)
 
