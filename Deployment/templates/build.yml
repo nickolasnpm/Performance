@@ -17,6 +17,7 @@ stages:
       imageTag: '$(Build.BuildId)'
       rootPath: '$(Build.SourcesDirectory)'
       dockerfilePath: '$(Build.SourcesDirectory)/Performance/Dockerfile'
+      solutionPath: '$(Build.SourcesDirectory)/Performance.slnx'
       unitTestPath: "$(Build.SourcesDirectory)/UnitTest"
       integrationTestPath: "$(Build.SourcesDirectory)/IntegrationTest"
       testResultsPath: "$(Agent.TempDirectory)/TestResults"
@@ -196,6 +197,7 @@ stages:
           - script: |
               snyk test \
                 --severity-threshold=high \
+                --file="$(solutionPath)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
