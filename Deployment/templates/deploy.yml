@@ -37,7 +37,6 @@ parameters:
   # DefaultConnection
 
 stages:
-  # CD Stage
   - stage: Deploy
     displayName: 'Deploy to Raspberry Pi (${{ parameters.appEnv }})'
     dependsOn:

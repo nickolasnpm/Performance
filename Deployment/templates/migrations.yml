@@ -31,7 +31,6 @@ parameters:
   # DefaultConnection
 
 stages:
-  # Migration Stage
   - stage: Migrate
     displayName: 'EF Core Migrations (${{ parameters.appEnv }})'
     dependsOn: Build
