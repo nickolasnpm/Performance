@@ -177,7 +177,7 @@ stages:
                 $(imageTag)
                 latest
 
-      - job: SecurityScan
+- job: SecurityScan
         displayName: 'Security Scan (Snyk)'
         dependsOn:
           - RunIntegrationTests
@@ -198,15 +198,16 @@ stages:
                 --severity-threshold=high \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
             displayName: 'Snyk - NuGet Dependency Scan'
+            workingDirectory: '$(Build.SourcesDirectory)'
             env:
               SnykToken: $(SnykToken)
 
           - script: |
               snyk code test \
                 --severity-threshold=high \
-                "$(Build.SourcesDirectory)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
             displayName: 'Snyk - C# Code Scan (SAST)'
+            workingDirectory: '$(Build.SourcesDirectory)'
             env:
               SnykToken: $(SnykToken)
 
@@ -224,6 +225,7 @@ stages:
                 --severity-threshold=high \
                 --sarif-file-output="$(sarifOutputPath)/snyk-secrets.sarif"
             displayName: 'Snyk - Secrets Scan'
+            workingDirectory: '$(Build.SourcesDirectory)'
             env:
               SnykToken: $(SnykToken)
 
