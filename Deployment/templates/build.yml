@@ -231,6 +231,13 @@ stages:
             displayName: 'Snyk - Docker Image Scan'
             env:
               SNYK_TOKEN: $(SnykToken)
+          
+          - script: |
+              snyk --version
+              snyk --help
+            displayName: 'Snyk - Debug Available Commands'
+            env:
+              SNYK_TOKEN: $(SnykToken)
 
           - script: |
               snyk secrets test \
