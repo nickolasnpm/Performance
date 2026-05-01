@@ -25,6 +25,7 @@
 		</PackageReference>
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Scalar.AspNetCore" />
+		<PackageReference Include="SmartSecureAnalyzer" />
 	</ItemGroup>
 
 </Project>
