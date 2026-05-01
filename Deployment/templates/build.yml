@@ -245,7 +245,7 @@ stages:
                 --source="$(Build.SourcesDirectory)" \
                 --report-format=sarif \
                 --report-path="$(sarifOutputPath)/secrets.sarif" \
-                --no-git
+                --no-git \
                 --verbose
             displayName: 'Secrets Scan - Gitleaks'
             workingDirectory: '$(Agent.TempDirectory)'
