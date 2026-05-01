@@ -234,8 +234,7 @@ stages:
 
           - script: |
               snyk secrets test \
-                --severity-threshold=high \
-                --sarif-file-output="$(sarifOutputPath)/snyk-secrets.sarif"
+                --severity-threshold=high
             displayName: 'Snyk - Secrets Scan'
             workingDirectory: '$(Build.SourcesDirectory)'
             env:
