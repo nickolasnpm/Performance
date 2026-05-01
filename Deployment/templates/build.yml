@@ -205,7 +205,7 @@ stages:
 
           - script: |
               snyk test \
-                --severity-threshold=high \
+                --severity-threshold=low \
                 --all-projects \
                 --dotnet-runtime-resolution \
                 --sarif-file-output="$(sarifOutputPath)/snyk-deps.sarif"
@@ -216,7 +216,7 @@ stages:
 
           - script: |
               snyk code test \
-                --severity-threshold=high \
+                --severity-threshold=low \
                 --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
             displayName: 'Snyk - Code Scan (SAST)'
             workingDirectory: '$(Build.SourcesDirectory)'
@@ -225,7 +225,7 @@ stages:
 
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
-                --severity-threshold=high \
+                --severity-threshold=low \
                 --file="$(dockerfilePath)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-container.sarif"
             displayName: 'Snyk - Docker Image Scan'
