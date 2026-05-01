@@ -239,14 +239,15 @@ stages:
           - script: |
               wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_arm64.tar.gz
               tar -xzf gitleaks_8.18.2_linux_arm64.tar.gz
-              sudo mv gitleaks /usr/local/bin/
+              chmod +x gitleaks
+              export PATH="$PATH:$(pwd)"
               gitleaks detect \
                 --source="$(Build.SourcesDirectory)" \
                 --report-format=sarif \
                 --report-path="$(sarifOutputPath)/secrets.sarif" \
                 --no-git
             displayName: 'Secrets Scan - Gitleaks'
-            workingDirectory: '$(Build.SourcesDirectory)'
+            workingDirectory: '$(Agent.TempDirectory)'
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
