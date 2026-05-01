@@ -203,6 +203,7 @@ stages:
               dotnet restore "$(Build.SourcesDirectory)"
             displayName: 'Restore Dependencies'
 
+          # serves as second checking layer as the package vulnerabilities may be found during package restore in previous jobs
           - script: |
               snyk test \
                 --severity-threshold=low \
@@ -214,6 +215,7 @@ stages:
             env:
               SNYK_TOKEN: $(SnykToken)
 
+          # includes security anti-patterns like SQL injection, hardcoded secrets, insecure deserialization, etc.
           - script: |
               snyk code test \
                 --severity-threshold=low \
@@ -223,9 +225,11 @@ stages:
             env:
               SNYK_TOKEN: $(SnykToken)
 
+          # exclude base image vulnerabilities since they are not within our control
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
                 --severity-threshold=low \
+                --exclude-base-image-vulns \
                 --file="$(dockerfilePath)" \
                 --sarif-file-output="$(sarifOutputPath)/snyk-container.sarif"
             displayName: 'Snyk - Docker Image Scan'
