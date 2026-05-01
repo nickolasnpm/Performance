@@ -12,26 +12,25 @@ namespace Performance.Application.Extensions.Mapping.Users
 {
     public static class UserMapper
     {
-        public static UserDTO EntityToDTO(User user, IIdHelper idHelper) => new()
-        {
-            Id = idHelper.EncryptId(user.Id),
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            DateOfBirth = user.DateOfBirth,
-            PhoneNumber = user.PhoneNumber,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            IsEmailVerified = user.IsEmailVerified,
-            IsActive = user.IsActive,
-            LastLoginAt = user.LastLoginAt,
-            Address = user.Address?.Map(a => AddressMapper.ToDTO(a, idHelper)) ?? null,
-            Roles = user.Roles?.Map(r => RoleMapper.ToDTO(r, idHelper)).ToList() ?? null,
-            BankAccount = user.BankAccount?.Map(b => BankAccountMapper.ToDTO(b, idHelper)) ?? null,
-            CreditCards = user.CreditCards?.Map(c => CreditCardMapper.ToDTO(c, idHelper)) ?? null,
-            Loans = user.Loans?.Map(l => LoanMapper.ToDTO(l, idHelper)).ToList() ?? null,
-            SupportTickets = user.SupportTickets?.Map(s => SupportTicketMapper.ToDTO(s, idHelper)) ?? null
-        };
+        public static UserDTO EntityToDTO(User user, IIdHelper idHelper) => new(
+            Id: idHelper.EncryptId(user.Id),
+            Username: user.Username,
+            Email: user.Email,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            DateOfBirth: user.DateOfBirth,
+            PhoneNumber: user.PhoneNumber,
+            ProfilePictureUrl: user.ProfilePictureUrl,
+            IsEmailVerified: user.IsEmailVerified,
+            IsActive: user.IsActive,
+            LastLoginAt: user.LastLoginAt,
+            Address: user.Address?.Map(a => AddressMapper.ToDTO(a, idHelper)) ?? null,
+            Roles: user.Roles?.Map(r => RoleMapper.ToDTO(r, idHelper)).ToList() ?? null,
+            BankAccount: user.BankAccount?.Map(b => BankAccountMapper.ToDTO(b, idHelper)) ?? null,
+            CreditCards: user.CreditCards?.Map(c => CreditCardMapper.ToDTO(c, idHelper)) ?? null,
+            Loans: user.Loans?.Map(l => LoanMapper.ToDTO(l, idHelper)).ToList() ?? null,
+            SupportTickets: user.SupportTickets?.Map(s => SupportTicketMapper.ToDTO(s, idHelper)) ?? null
+        );
 
         public static User AddRequestToEntity(AddUserRequestDTO request) => new()
         {

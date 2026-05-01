@@ -8,7 +8,6 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Infrastructure.Security;
 
 namespace Performance.Application.Services
 {
@@ -77,10 +76,10 @@ namespace Performance.Application.Services
                 var dataDuplicatedErrors = requestDTOs
                     .Where(u => duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase)
                                 || duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase))
-                    .Select(u => new AddErrorResponseDTO
+                    .Select(u => new 
                     {
-                        Username = u.Username,
-                        Email = u.Email,
+                        u.Username,
+                        u.Email,
                         IsUsernameExist = duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase),
                         IsEmailExist = duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase)
                     })
@@ -102,10 +101,10 @@ namespace Performance.Application.Services
             var existingEmails = existingUsers.Select(u => u.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var dataExistedErrors = requestDTOs
-                .Select(u => new AddErrorResponseDTO
+                .Select(u => new
                 {
-                    Username = u.Username,
-                    Email = u.Email,
+                    u.Username,
+                    u.Email,
                     IsUsernameExist = existingUsernames.Contains(u.Username),
                     IsEmailExist = existingEmails.Contains(u.Email)
                 })

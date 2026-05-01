@@ -6,14 +6,24 @@ namespace Performance.Application.Extensions.Mapping.Addresses
 {
     public static class AddressMapper
     {
-        public static AddressDTO ToDTO(Address address, IIdHelper idHelper) => new()
-        {
-            Id = idHelper.EncryptId(address.Id),
-            AddressLine = address.AddressLine,
-            City = address.City,
-            State = address.State,
-            PostalCode = address.PostalCode,
-            Country = address.Country,
-        };
+        public static AddressDTO ToDTO(Address address, IIdHelper idHelper) => new(
+            Id: idHelper.EncryptId(address.Id),
+            AddressLine: address.AddressLine,
+            City: address.City,
+            State: address.State,
+            PostalCode: address.PostalCode,
+            Country: address.Country
+        );
+
+        // extension(Address address)
+        // {
+        //     public AddressDTO ToDTO(IIdHelper idHelper) => new(
+        //         Id: idHelper.EncryptId(address.Id),
+        //         AddressLine: address.AddressLine,
+        //         City: address.City,
+        //         State: address.State,
+        //         PostalCode: address.PostalCode,
+        //         Country: address.Country);
+        // }
     }
 }

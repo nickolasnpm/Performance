@@ -6,11 +6,10 @@ namespace Performance.Application.Extensions.Mapping.SupportTicketComments
 {
     public static class SupportTicketCommentMapper
     {
-        public static SupportTicketCommentDTO ToDTO(SupportTicketComment comment, IIdHelper idHelper) => new()
-        {
-            Id = idHelper.EncryptId(comment.Id),
-            CommentText = comment.CommentText,
-            RecommendedAction = comment.RecommendedAction
-        };
+        public static SupportTicketCommentDTO ToDTO(SupportTicketComment comment, IIdHelper idHelper) => new(
+            Id: idHelper.EncryptId(comment.Id),
+            CommentText: comment.CommentText,
+            RecommendedAction: comment.RecommendedAction
+        );
     }
 }

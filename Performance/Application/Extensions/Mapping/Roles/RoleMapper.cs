@@ -6,10 +6,9 @@ namespace Performance.Application.Extensions.Mapping.Roles
 {
     public static class RoleMapper
     {
-        public static RoleDTO ToDTO (Role role, IIdHelper idHelper) => new()
-        {
-            Id = idHelper.EncryptId(role.Id),
-            Name = role.Name
-        };
+        public static RoleDTO ToDTO (Role role, IIdHelper idHelper) => new(
+            Id: idHelper.EncryptId(role.Id),
+            Name: role.Name
+        );
     }
 }
