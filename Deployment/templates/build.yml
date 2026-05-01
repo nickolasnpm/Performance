@@ -146,7 +146,7 @@ stages:
 
       - job: BuildImage
         displayName: 'Build Docker Images'
-        dependsOn: RunUnitTests 
+        dependsOn: RunUnitTests
         condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
@@ -188,6 +188,12 @@ stages:
           demands:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
+
+          - task: UseDotNet@2
+            displayName: 'Use .NET 10'
+            inputs:
+              packageType: 'sdk'
+              version: '10.x'
 
           - script: |
               mkdir -p "$(sarifOutputPath)"
