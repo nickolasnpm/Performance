@@ -19,9 +19,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.3" />
 
     <!-- Vulnerable packages added directly to trigger Snyk scan -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.4" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.7" />
     <PackageVersion Include="Azure.Identity" Version="1.6.0" />
-    <PackageVersion Include="System.Drawing.Common" Version="5.0.0" />
 
     <!-- ASP.NET Core / Web -->
     <PackageVersion Include="Microsoft.AspNetCore.OData" Version="9.4.1" />

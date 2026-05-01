@@ -25,6 +25,11 @@
 		</PackageReference>
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Scalar.AspNetCore" />
+
+		test vulnerable packages added directly to trigger Snyk scan
+		<PackageReference Include="Microsoft.Data.SqlClient" />
+		<PackageReference Include="Azure.Identity" />
+
 	</ItemGroup>
 
 </Project>
