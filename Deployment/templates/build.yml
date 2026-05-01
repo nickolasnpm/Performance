@@ -218,7 +218,7 @@ stages:
               snyk code test \
                 --severity-threshold=high \
                 --sarif-file-output="$(sarifOutputPath)/snyk-code.sarif"
-            displayName: 'Snyk - C# Code Scan (SAST)'
+            displayName: 'Snyk - Code Scan (SAST)'
             workingDirectory: '$(Build.SourcesDirectory)'
             env:
               SNYK_TOKEN: $(SnykToken)
