@@ -203,7 +203,7 @@ stages:
               dotnet restore "$(Build.SourcesDirectory)"
             displayName: 'Restore Dependencies'
 
-          # serves as second checking layer as the package vulnerabilities may be found during package restore in previous jobs
+          # serves as second checking layer as the package vulnerabilities is checked during package restore in previous jobs
           - script: |
               snyk test \
                 --severity-threshold=low \
@@ -215,7 +215,7 @@ stages:
             env:
               SNYK_TOKEN: $(SnykToken)
 
-          # includes security anti-patterns like SQL injection, hardcoded secrets, insecure deserialization, etc.
+          # the check will include security anti-patterns like SQL injection, hardcoded secrets, insecure deserialization, etc.
           - script: |
               snyk code test \
                 --severity-threshold=low \
@@ -237,18 +237,13 @@ stages:
               SNYK_TOKEN: $(SnykToken)
           
           - script: |
-              if ! command -v gitleaks &> /dev/null; then
-                echo "Installing gitleaks..."
-                wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_arm64.tar.gz
-                tar -xzf gitleaks_8.18.2_linux_arm64.tar.gz
-                sudo mv gitleaks /usr/local/bin/
-              fi
-              gitleaks detect \
-                --source="$(Build.SourcesDirectory)" \
-                --report-format=sarif \
-                --report-path="$(sarifOutputPath)/secrets.sarif" \
-                --no-git
-            displayName: 'Secrets Scan - Gitleaks'
+              snyk extension install snyk/cli-extension-secrets
+              snyk secrets test \
+                --severity-threshold=high
+            displayName: 'Snyk - Secrets Scan'
+            workingDirectory: '$(Build.SourcesDirectory)'
+            env:
+              SNYK_TOKEN: $(SnykToken)
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Security Scan Results'
