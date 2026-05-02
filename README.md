@@ -5,6 +5,8 @@ This project is a .NET-based web API to test the performance optimization strate
 1. Offset pagination vs Cursor pagination.
 2. Batch processing for Create, Update, & Delete.
 
+The amound of initial data is 1 million rows.
+
 ## A. Architecture
 
 This project follows a monolith architecture for development speed and simplicity whereby the folder is arranged accordingly with the class libraries in Clean Architecture.

@@ -3,7 +3,6 @@ using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Mapping;
-using Performance.Application.Extensions.Mapping;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
