@@ -3,7 +3,7 @@ using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Mapping;
-using Performance.Application.Extensions.Mapping.Users;
+using Performance.Application.Extensions.Mapping;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
@@ -115,7 +115,7 @@ namespace Performance.Application.Services
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.Conflict, Message = "Some usernames or emails already exist.", Payload = dataExistedErrors });
 
-            var toBeCreated = requestDTOs.Map(UserMapper.AddRequestToEntity);
+            var toBeCreated = requestDTOs.Select(UserMapper.AddRequestToEntity).ToList();
             await unitOfWork.UserRepository.Create(toBeCreated);
             await unitOfWork.SaveChangesAsync();
 
@@ -143,7 +143,7 @@ namespace Performance.Application.Services
                 { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
             var existingUsersById = existingUsers.ToDictionary(u => u.Id);
-            requestDTOs.ForEach(dto => UserMapper.UpdateRequestToEntity(existingUsersById[idHelper.DecryptId(dto.Id)], dto));
+            requestDTOs.ForEach(dto => dto.UpdateRequestToEntity(existingUsersById[idHelper.DecryptId(dto.Id)]));
 
             await unitOfWork.SaveChangesAsync();
 
@@ -191,7 +191,7 @@ namespace Performance.Application.Services
 
             return new OffsetPaginationResponse<UserDTO>()
             {
-                Data = users.Map(u => UserMapper.EntityToDTO(u, idHelper)),
+                Data = users.Select(u => u.EntityToDTO(idHelper)).ToList(),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = hasNextPage,
@@ -229,7 +229,7 @@ namespace Performance.Application.Services
 
             return new CursorPaginationResponse<UserDTO>
             {
-                Data = result.Select(u => UserMapper.EntityToDTO(u, idHelper)).ToList(),
+                Data = result.Select(u => u.EntityToDTO(idHelper)).ToList(),
                 TotalCount = totalCount, // optional
                 NextCursor = nextCursor,
                 PreviousCursor = previousCursor,
