@@ -39,7 +39,9 @@ namespace Performance.Application.Extensions.Mapping
                 LastName = request.LastName,
                 DateOfBirth = request.DateOfBirth,
                 PhoneNumber = request.PhoneNumber,
-                ProfilePictureUrl = request.ProfilePictureUrl
+                ProfilePictureUrl = request.ProfilePictureUrl,
+                CreatedAt = DateTimeOffset.Now,
+                CreatedBy = "User" // has to assign here as BulkInsertAsync does not trigger SaveChangeAsync interceptor
             };
         }
 

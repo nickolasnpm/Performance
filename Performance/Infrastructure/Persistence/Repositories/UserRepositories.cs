@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EFCore.BulkExtensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
@@ -11,7 +12,7 @@ using Performance.Infrastructure.Caching;
 
 namespace Performance.Infrastructure.Persistence.Repositories
 {
-    public class UserRepositories (UserDbContext userDbContext, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
+    public class UserRepositories(UserDbContext userDbContext, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUserRepositories
     {
         public IQueryable<User> GetAll()
@@ -45,7 +46,7 @@ namespace Performance.Infrastructure.Persistence.Repositories
             queryable = queryable.ApplyIncludes(includeOptions);
 
             return new PaginatedResult<User>(
-                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.Size).Take(request.Size), 
+                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.Size).Take(request.Size),
                 TotalCount: totalCount);
         }
 
@@ -84,20 +85,18 @@ namespace Performance.Infrastructure.Persistence.Repositories
             queryable = queryable.ApplyIncludes(includeOptions);
 
             return new PaginatedResult<User>(
-                Items: queryable.Take(request.Size + 1), 
+                Items: queryable.Take(request.Size + 1),
                 TotalCount: totalCount);
         }
 
-        public async Task<List<User>> Create(List<User> entities)
+        public async Task Create(IEnumerable<User> entities)
         {
-            await userDbContext.AddRangeAsync(entities);
-            return entities;
+            await userDbContext.BulkInsertAsync(entities);
         }
 
-        public async Task<bool> Delete(HashSet<long> ids)
+        public async Task Delete(HashSet<long> ids)
         {
             await userDbContext.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();
-            return true;
         }
     }
 }

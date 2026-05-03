@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Buffers;
+using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
 using Performance.Application.DTOs;
@@ -8,6 +10,7 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
+using Performance.Domain.Entity;
 
 namespace Performance.Application.Services
 {
@@ -61,63 +64,85 @@ namespace Performance.Application.Services
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
-            var duplicatesInBatch = requestDTOs.GroupBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
+            // HashSet is unique by default. Adding duplicated name will return false
+            var requestedUsernames = new HashSet<string>(requestDTOs.Count, StringComparer.OrdinalIgnoreCase);
+            var requestedEmails = new HashSet<string>(requestDTOs.Count, StringComparer.OrdinalIgnoreCase);
+            var duplicateUsernames = new HashSet<string>(requestDTOs.Count, StringComparer.OrdinalIgnoreCase);
+            var duplicateEmails = new HashSet<string>(requestDTOs.Count, StringComparer.OrdinalIgnoreCase);
 
-            var duplicateEmailsInBatch = requestDTOs.GroupBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
+            foreach (var dto in requestDTOs)
+            {
+                if (!requestedUsernames.Add(dto.Username))
+                    duplicateUsernames.Add(dto.Username);
 
-            if (duplicatesInBatch.Any() || duplicateEmailsInBatch.Any())
+                if (!requestedEmails.Add(dto.Email))
+                    duplicateEmails.Add(dto.Email);
+            }
+
+            if (duplicateUsernames.Any() || duplicateEmails.Any())
             {
                 var dataDuplicatedErrors = requestDTOs
-                    .Where(u => duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase)
-                                || duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase))
-                    .Select(u => new
-                    {
+                    .Where(u => duplicateUsernames.Contains(u.Username, StringComparer.OrdinalIgnoreCase)
+                                || duplicateEmails.Contains(u.Email, StringComparer.OrdinalIgnoreCase))
+                    .Select(u => new AddUserErrorResponseDTO
+                    (
                         u.Username,
+                        IsUsernameDuplicated: duplicateUsernames.Contains(u.Username, StringComparer.OrdinalIgnoreCase),
+                        IsUsernameExist: null,
                         u.Email,
-                        IsUsernameExist = duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase),
-                        IsEmailExist = duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase)
-                    })
+                        IsEmailDuplicated: duplicateEmails.Contains(u.Email, StringComparer.OrdinalIgnoreCase),
+                        IsEmailExist: null
+                    ))
                     .ToList();
 
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.Conflict, Message = "Some usernames or emails are duplicated in the request.", Payload = dataDuplicatedErrors });
             }
 
-            var requestedUsernames = requestDTOs.Select(u => u.Username).ToHashSet();
-            var requestedEmails = requestDTOs.Select(u => u.Email).ToHashSet();
+            var existingUsers = new List<(string Username, string Email)>();
 
-            var existingUsers = await unitOfWork.UserRepository.GetAll()
-                .Where(u => requestedUsernames.Contains(u.Username) || requestedEmails.Contains(u.Email))
-                .Select(u => new { u.Username, u.Email })
-                .ToListAsync();
+            foreach (var chunk in requestDTOs.Chunk(50))
+            {
+                var usernames = chunk.Select(x => x.Username).ToList();
+                var emails = chunk.Select(x => x.Email).ToList();
 
-            var existingUsernames = existingUsers.Select(u => u.Username).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var existingEmails = existingUsers.Select(u => u.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var batch = await unitOfWork.UserRepository.GetAll()
+                    .Where(u => usernames.Contains(u.Username) || emails.Contains(u.Email))
+                    .Select(u => new { u.Username, u.Email })
+                    .ToListAsync();
 
-            var dataExistedErrors = requestDTOs
-                .Select(u => new
+                existingUsers.AddRange(batch.Select(u => (u.Username, u.Email)));
+            }
+
+            if (existingUsers.Count > 0)
+            {
+                var existingUsernames = new HashSet<string>(existingUsers.Count, StringComparer.OrdinalIgnoreCase);
+                var existingEmails = new HashSet<string>(existingUsers.Count, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var u in existingUsers)
                 {
-                    u.Username,
-                    u.Email,
-                    IsUsernameExist = existingUsernames.Contains(u.Username),
-                    IsEmailExist = existingEmails.Contains(u.Email)
-                })
-                .Where(e => e.IsUsernameExist || e.IsEmailExist)
-                .ToList();
+                    existingUsernames.Add(u.Username);
+                    existingEmails.Add(u.Email);
+                }
 
-            if (dataExistedErrors.Any())
+                var dataExistedErrors = existingUsers
+                    .Select(u => new AddUserErrorResponseDTO
+                    (
+                        u.Username,
+                        IsUsernameDuplicated: null,
+                        IsUsernameExist: existingUsernames.Contains(u.Username),
+                        u.Email,
+                        IsEmailDuplicated: null,
+                        IsEmailExist: existingEmails.Contains(u.Email)
+                    ))
+                    .ToList();
+
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.Conflict, Message = "Some usernames or emails already exist.", Payload = dataExistedErrors });
+            }
 
             var toBeCreated = requestDTOs.Select(UserMapper.AddRequestToEntity).ToList();
             await unitOfWork.UserRepository.Create(toBeCreated);
-            await unitOfWork.SaveChangesAsync();
 
             return Result<bool, ResultError>.Success(true);
         }
@@ -128,22 +153,24 @@ namespace Performance.Application.Services
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
-            HashSet<long> entityIds = requestDTOs.Select(u => idHelper.DecryptId(u.Id)).ToHashSet();
+            var dtoById = new Dictionary<long, UpdateUserRequestDTO>(requestDTOs.Count);
 
-            var existingUsers = await unitOfWork.UserRepository.GetAll()
+            foreach (var dto in requestDTOs)
+                dtoById[idHelper.DecryptId(dto.Id)] = dto;
+
+            var existingUsersById = await unitOfWork.UserRepository.GetAll()
                 .AsTracking()
-                .Where(u => entityIds.Contains(u.Id))
-                .ToListAsync();
+                .Where(u => dtoById.Keys.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
 
-            var existingIds = existingUsers.Select(u => u.Id).ToHashSet();
-            var notFoundIds = entityIds.Except(existingIds).ToList();
+            var notFoundIds = dtoById.Keys.Except(existingUsersById.Keys).ToList();
 
             if (notFoundIds.Any())
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
 
-            var existingUsersById = existingUsers.ToDictionary(u => u.Id);
-            requestDTOs.ForEach(dto => dto.UpdateRequestToEntity(existingUsersById[idHelper.DecryptId(dto.Id)]));
+            foreach (var (id, dto) in dtoById)
+                dto.UpdateRequestToEntity(existingUsersById[id]);
 
             await unitOfWork.SaveChangesAsync();
 
@@ -156,13 +183,7 @@ namespace Performance.Application.Services
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
-            HashSet<long> entityIds = new HashSet<long>();
-
-            foreach (var hashId in ids)
-            {
-                long decryptedId = idHelper.DecryptId(hashId);
-                entityIds.Add(decryptedId);
-            }
+            HashSet<long> entityIds = ids.Select(idHelper.DecryptId).ToHashSet();
 
             var existingIds = await unitOfWork.UserRepository.GetAll()
                 .Where(u => entityIds.Contains(u.Id))

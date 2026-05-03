@@ -23,6 +23,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="EFCore.BulkExtensions" />
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Scalar.AspNetCore" />
 		<PackageReference Include="SmartSecureAnalyzer" />

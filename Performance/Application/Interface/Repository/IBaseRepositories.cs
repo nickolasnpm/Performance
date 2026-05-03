@@ -3,7 +3,7 @@
     public interface IBaseRepositories<TEntity> where TEntity : class
     {
         IQueryable<TEntity> GetAll();
-        Task<List<TEntity>> Create(List<TEntity> entities);
-        Task<bool> Delete(HashSet<long> ids);
+        Task Create(IEnumerable<TEntity> entities);
+        Task Delete(HashSet<long> ids);
     }
 }
