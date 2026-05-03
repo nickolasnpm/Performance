@@ -146,7 +146,7 @@ stages:
 
       - job: BuildImage
         displayName: 'Build Docker Images'
-        dependsOn: RunUnitTests
+        dependsOn: RunIntegrationTests
         condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
@@ -179,9 +179,7 @@ stages:
 
       - job: SecurityScan
         displayName: 'Security Scan (Snyk)'
-        dependsOn:
-          - RunIntegrationTests
-          - BuildImage
+        dependsOn: BuildImage
         condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
