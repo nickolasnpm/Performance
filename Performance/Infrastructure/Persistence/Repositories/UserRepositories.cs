@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
+using Performance.Application.DTOs;
 using Performance.Application.Extensions.Repository;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Repository;
@@ -44,11 +45,11 @@ namespace Performance.Infrastructure.Persistence.Repositories
             queryable = queryable.ApplyIncludes(includeOptions);
 
             return new PaginatedResult<User>(
-                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.PageSize).Take(request.PageSize), 
+                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.Size).Take(request.Size), 
                 TotalCount: totalCount);
         }
 
-        public async Task<PaginatedResult<User>> GetPaginatedUsersByCursor(CursorPaginationRequest request, UserIncludeOptions includeOptions)
+        public async Task<PaginatedResult<User>> GetPaginatedUsersByCursor(long cursorValue, CursorPaginationRequest request, UserIncludeOptions includeOptions)
         {
             IQueryable<User> queryable = GetAll();
 
@@ -68,11 +69,11 @@ namespace Performance.Infrastructure.Persistence.Repositories
 
             if (request.IsQueryPreviousPage)
             {
-                queryable = queryable.Where(u => u.Id < request.Cursor).OrderByDescending(u => u.Id);
+                queryable = queryable.Where(u => u.Id < cursorValue).OrderByDescending(u => u.Id);
             }
             else
             {
-                queryable = queryable.Where(u => u.Id > request.Cursor).OrderBy(u => u.Id);
+                queryable = queryable.Where(u => u.Id > cursorValue).OrderBy(u => u.Id);
             }
 
             if (includeOptions == UserIncludeOptions.All)
@@ -83,7 +84,7 @@ namespace Performance.Infrastructure.Persistence.Repositories
             queryable = queryable.ApplyIncludes(includeOptions);
 
             return new PaginatedResult<User>(
-                Items: queryable.Take(request.PageSize + 1), 
+                Items: queryable.Take(request.Size + 1), 
                 TotalCount: totalCount);
         }
 

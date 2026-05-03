@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
+using Performance.Application.DTOs;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Extensions.Mapping;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
@@ -42,7 +43,7 @@ namespace Performance.Application.Services
         public async Task<Result<UserDTO, ResultError>> GetByIdAsync(string hashId)
         {
             var id = idHelper.DecryptId(hashId);
-            
+
             var user = await unitOfWork.UserRepository.GetAll()
                 .Where(u => u.Id == id)
                 .Select(u => UserMapper.EntityToDTO(u, idHelper))
@@ -75,7 +76,7 @@ namespace Performance.Application.Services
                 var dataDuplicatedErrors = requestDTOs
                     .Where(u => duplicatesInBatch.Contains(u.Username, StringComparer.OrdinalIgnoreCase)
                                 || duplicateEmailsInBatch.Contains(u.Email, StringComparer.OrdinalIgnoreCase))
-                    .Select(u => new 
+                    .Select(u => new
                     {
                         u.Username,
                         u.Email,
@@ -179,31 +180,38 @@ namespace Performance.Application.Services
         }
 
         #region private methods
-        private async Task<OffsetPaginationResponse<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
+        private async Task<ListResponseDTO<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
 
-            int totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+            int totalPages = (int)Math.Ceiling((double)totalCount / request.Size);
 
             bool hasNextPage = request.Page < totalPages;
             bool hasPreviousPage = request.Page > 1;
 
-            return new OffsetPaginationResponse<UserDTO>()
-            {
-                Data = users.Select(u => u.EntityToDTO(idHelper)).ToList(),
-                TotalCount = totalCount,
-                TotalPages = totalPages,
-                HasNextPage = hasNextPage,
-                HasPreviousPage = hasPreviousPage
-            };
+            return new ListResponseDTO<UserDTO>(
+                Data: users.Select(u => u.EntityToDTO(idHelper)).ToList(),
+                OffsetPaginationResponse: new OffsetPaginationResponse(
+                    TotalCount: totalCount,
+                    TotalPages: totalPages,
+                    HasNextPage: hasNextPage,
+                    HasPreviousPage: hasPreviousPage
+                ),
+                CursorPaginationResponse: null
+            );
         }
 
-        private async Task<CursorPaginationResponse<UserDTO>> CursorPaginationAsync(CursorPaginationRequest request)
+        private async Task<ListResponseDTO<UserDTO>> CursorPaginationAsync(CursorPaginationRequest request)
         {
-            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(request, UserIncludeOptions.All);
+            long cursorValue = 0;
+
+            if (!string.IsNullOrEmpty(request.Cursor))
+                cursorValue = idHelper.DecryptId(request.Cursor);
+
+            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(cursorValue, request, UserIncludeOptions.All);
             var result = await users.ToListAsync();
 
-            bool hasMore = result.Count > request.PageSize;
+            bool hasMore = result.Count > request.Size;
 
             if (hasMore)
                 result.RemoveAt(result.Count - 1);
@@ -220,19 +228,21 @@ namespace Performance.Application.Services
             else
             {
                 hasNextPage = hasMore;
-                hasPreviousPage = request.Cursor > 0;
+                hasPreviousPage = cursorValue > 0;
             }
 
             long? nextCursor = hasNextPage ? result.Last().Id : null;
             long? previousCursor = hasPreviousPage ? result.First().Id : null;
 
-            return new CursorPaginationResponse<UserDTO>
-            {
-                Data = result.Select(u => u.EntityToDTO(idHelper)).ToList(),
-                TotalCount = totalCount, // optional
-                NextCursor = nextCursor,
-                PreviousCursor = previousCursor,
-            };
+            return new ListResponseDTO<UserDTO>(
+                Data: result.Select(u => u.EntityToDTO(idHelper)).ToList(),
+                OffsetPaginationResponse: null,
+                CursorPaginationResponse: new CursorPaginationResponse(
+                    TotalCount: totalCount, // optional
+                    NextCursor: nextCursor,
+                    PreviousCursor: previousCursor
+                )
+            );
         }
         #endregion
     }

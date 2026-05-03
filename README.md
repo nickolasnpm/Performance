@@ -95,3 +95,7 @@ All the below decision is made for development speed and simplicity, and may not
 ## H. Things to do
 
 - [Infrastructure as code (IaC)](https://learn.microsoft.com/en-us/devops/deliver/what-is-infrastructure-as-code) - To enforce consistency by representing desired environment states via well-documented code
+
+## I. Benchmarking Results
+
+![alt text](image.png)

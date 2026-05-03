@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Performance.Application.Interface.Services;
+using Performance.Application.DTOs;
 using Performance.Application.DTOs.Users;
-using Performance.Application.Common.Models;
 
 namespace Performance.API.Controllers
 {

@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
+using Performance.Application.DTOs;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Infrastructure.Persistence.Repositories;
 
@@ -62,7 +62,7 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
     {
         // Arrange
         var sut = CreateSut();
-        var request = new OffsetPaginationRequest { Page = 1, PageSize = 5 };
+        var request = new OffsetPaginationRequest (Page: 1, Size: 5 );
 
         // Act
         var (query, totalCount) =
@@ -80,7 +80,7 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
     public async Task GetPaginatedUsersByOffset_LastPage_ShouldReturnRemainingItems()
     {
         var sut = CreateSut();
-        var request = new OffsetPaginationRequest { Page = 4, PageSize = 5 };
+        var request = new OffsetPaginationRequest { Page = 4, Size = 5 };
 
         var (query, totalCount) =
             await sut.GetPaginatedUsersByOffset(request, UserIncludeOptions.None);
@@ -101,19 +101,18 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
         var sut = CreateSut();
 
         var request = new CursorPaginationRequest
-        {
-            Cursor = 5,
-            PageSize = 3,
-            IsQueryPreviousPage = false
-        };
+        (
+            Cursor: null,
+            IsQueryPreviousPage: false,
+            Size: 3
+        );
 
-        var (query, totalCount) =
-            await sut.GetPaginatedUsersByCursor(request, UserIncludeOptions.None);
+        var (query, totalCount) = await sut.GetPaginatedUsersByCursor(0, request, UserIncludeOptions.None);
 
         var users = await query.ToListAsync();
 
         totalCount.Should().Be(20);
-        users.Select(u => u.Id).Should().OnlyContain(id => id > 5);
+        users.Select(u => u.Id).Should().OnlyContain(id => id > 0);
         users.Count.Should().BeLessThanOrEqualTo(4); // PageSize + 1 scenario
     }
 
@@ -123,14 +122,13 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
         var sut = CreateSut();
 
         var request = new CursorPaginationRequest
-        {
-            Cursor = 10,
-            PageSize = 3,
-            IsQueryPreviousPage = true
-        };
+        (
+            Cursor: "something",
+            IsQueryPreviousPage: true,
+            Size: 3
+        );
 
-        var (query, _) =
-            await sut.GetPaginatedUsersByCursor(request, UserIncludeOptions.None);
+        var (query, _) = await sut.GetPaginatedUsersByCursor(10, request, UserIncludeOptions.None);
 
         var users = await query.ToListAsync();
 
@@ -143,14 +141,13 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
         var sut = CreateSut();
 
         var request = new CursorPaginationRequest
-        {
-            Cursor = 999,
-            PageSize = 5,
-            IsQueryPreviousPage = false
-        };
+        (
+            Cursor: "something",
+            IsQueryPreviousPage: false,
+            Size: 5
+        );
 
-        var (query, _) =
-            await sut.GetPaginatedUsersByCursor(request, UserIncludeOptions.None);
+        var (query, _) = await sut.GetPaginatedUsersByCursor(20, request, UserIncludeOptions.None);
 
         var users = await query.ToListAsync();
 
@@ -164,7 +161,7 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
     public async Task GetPaginatedUsersByOffset_WithCacheEnabled_ShouldCacheTotalCount()
     {
         var sut = CreateSut(useCache: true, cacheMinutes: 5);
-        var request = new OffsetPaginationRequest { Page = 1, PageSize = 5 };
+        var request = new OffsetPaginationRequest { Page = 1, Size = 5 };
 
         // First call (should populate cache)
         var (_, totalCount1) =

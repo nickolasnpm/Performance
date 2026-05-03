@@ -3,6 +3,7 @@ using Moq;
 using Performance.API.Controllers;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
+using Performance.Application.DTOs;
 using Performance.Application.DTOs.Users;
 using Performance.Application.Interface.Services;
 
@@ -24,33 +25,39 @@ namespace UnitTest
         public static IEnumerable<object[]> PaginationTestData =>
         [
             [
-                new ListRequestDTO
-                {
-                    PaginationType = PaginationType.Offset,
-                    OffsetPagination = new OffsetPaginationRequest { PageSize = 100, Page = 1 }
-                },
-                new OffsetPaginationResponse<UserDTO>
-                {
-                    Data = new List<UserDTO>(),
-                    TotalCount = 0,
-                    TotalPages = 1000,
-                    HasNextPage = true,
-                    HasPreviousPage = false
-                }
+                new ListRequestDTO(
+                    PaginationType: PaginationType.Offset,
+                    OffsetPagination: new OffsetPaginationRequest (Size: 100, Page: 1),
+                    CursorPagination: null
+                ),
+                new ListResponseDTO<UserDTO>
+                (
+                    Data: new List<UserDTO>(),
+                    OffsetPaginationResponse: new OffsetPaginationResponse(
+                        TotalCount: 0,
+                        TotalPages: 1000,
+                        HasNextPage: true,
+                        HasPreviousPage: false
+                    ),
+                    CursorPaginationResponse: null
+                )
             ],
             [
-                new ListRequestDTO
-                {
-                    PaginationType = PaginationType.Cursor,
-                    CursorPagination = new CursorPaginationRequest { PageSize = 100, Cursor = 0, IsQueryPreviousPage = false }
-                },
-                new CursorPaginationResponse<UserDTO>
-                {
-                    Data = new List<UserDTO>(),
-                    TotalCount = 0,
-                    NextCursor = 100,
-                    PreviousCursor = 1,
-                }
+                new ListRequestDTO(
+                    PaginationType: PaginationType.Cursor,
+                    OffsetPagination: null,
+                    CursorPagination: new CursorPaginationRequest (Size: 100, Cursor: null, IsQueryPreviousPage: false )
+                ),
+                new ListResponseDTO<UserDTO>
+                (
+                    Data: new List<UserDTO>(),
+                    OffsetPaginationResponse: null,
+                    CursorPaginationResponse: new CursorPaginationResponse(
+                        TotalCount: 0,
+                        NextCursor: 100,
+                        PreviousCursor: 1
+                    )
+                )
             ]
         ];
 
