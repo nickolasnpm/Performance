@@ -1,6 +1,4 @@
-﻿using System.Buffers;
-using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Performance.Application.Common.Enums;
 using Performance.Application.Common.Models;
 using Performance.Application.DTOs;
@@ -10,7 +8,6 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Domain.Entity;
 
 namespace Performance.Application.Services
 {
