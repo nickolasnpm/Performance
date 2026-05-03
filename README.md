@@ -98,4 +98,4 @@ All the below decision is made for development speed and simplicity, and may not
 
 ## I. Benchmarking Results
 
-![alt text](image.png)
+![alt text](BenchmarkSuite/image.png)
