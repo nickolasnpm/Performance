@@ -26,6 +26,25 @@ stages:
       integrationCoverageResultsFile: "$(Agent.TempDirectory)/TestResults/integration-coverage.xml"
       sarifOutputPath: "$(Agent.TempDirectory)/sarif"
     jobs:
+      - job: ValidateBranchName
+        displayName: 'Validate Branch Name'
+        condition: eq(variables['Build.Reason'], 'PullRequest')
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - Agent.Name -equals ${{ parameters.agentName }}
+        steps:
+          - script: |
+            echo "Source branch: $(System.PullRequest.SourceBranch)"
+            
+            if [[ "$(System.PullRequest.SourceBranch)" =~ ^refs/heads/(feature|chore)/ ]]; then
+              echo "Branch name is valid."
+            else
+              echo "##vso[task.logissue type=error]Branch '$(System.PullRequest.SourceBranch)' must start with feature or chore/"
+              exit 1
+            fi
+          displayName: 'Validate Branch Naming Convention'
+
       - job: RunUnitTests
         displayName: 'Run Unit Tests'
         pool:
