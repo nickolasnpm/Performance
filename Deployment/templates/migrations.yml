@@ -71,7 +71,7 @@ stages:
 
                     echo 'EF Core migrations applied successfully!'
                   displayName: 'Run EF Core Migrations'
-                  timeoutInMinutes: 30
+                  timeoutInMinutes: 45
 
                 - script: |
                     echo 'Removing migration container if still running or exited...'
