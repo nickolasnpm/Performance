@@ -54,6 +54,7 @@ stages:
               steps:
                 - script: |
                     echo 'Running EF Core migrations...'
+                    echo "Migration started at: $(date '+%Y-%m-%d %H:%M:%S')"
 
                     docker run --rm \
                       --stop-timeout 60 \
@@ -61,14 +62,18 @@ stages:
                       --network ${{ parameters.dockerNetwork }} \
                       -e ASPNETCORE_ENVIRONMENT=${{ parameters.appEnv }} \
                       -e ConnectionStrings__DefaultConnection="$(DefaultConnection)" \
-                      ${{ parameters.imageName }}-migration:latest
+                      ${{ parameters.imageName }}-migration:latest 2>&1 | \
+                      while IFS= read -r line; do
+                        echo "[$(date '+%H:%M:%S')] $line"
+                      done
 
-                    MIGRATION_EXIT=$?
+                    MIGRATION_EXIT=${PIPESTATUS[0]}
                     if [ $MIGRATION_EXIT -ne 0 ]; then
                       echo "##[error] EF Core migration failed with exit code $MIGRATION_EXIT. Aborting deployment."
                       exit $MIGRATION_EXIT
                     fi
 
+                    echo "Migration completed at: $(date '+%Y-%m-%d %H:%M:%S')"
                     echo 'EF Core migrations applied successfully!'
                   displayName: 'Run EF Core Migrations'
                   timeoutInMinutes: 45
