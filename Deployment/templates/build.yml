@@ -35,18 +35,20 @@ stages:
             - Agent.Name -equals ${{ parameters.agentName }}
         steps:
           - script: |
-            echo "Source branch: $(System.PullRequest.SourceBranch)"
-            
-            if [[ "$(System.PullRequest.SourceBranch)" =~ ^refs/heads/(feature|chore)/ ]]; then
-              echo "Branch name is valid."
-            else
-              echo "##vso[task.logissue type=error]Branch '$(System.PullRequest.SourceBranch)' must start with feature or chore/"
-              exit 1
-            fi
-          displayName: 'Validate Branch Naming Convention'
+              echo "Source branch: $(System.PullRequest.SourceBranch)"
+              
+              if [[ "$(System.PullRequest.SourceBranch)" =~ ^refs/heads/(feature|chore)/ ]]; then
+                echo "Branch name is valid."
+              else
+                echo "##vso[task.logissue type=error]Branch '$(System.PullRequest.SourceBranch)' must start with feature/ or chore/"
+                exit 1
+              fi
+            displayName: 'Validate Branch Naming Convention'
 
       - job: RunUnitTests
         displayName: 'Run Unit Tests'
+        dependsOn: ValidateBranchName
+        condition: succeeded()
         pool:
           name: ${{ parameters.poolName }}
           demands:
@@ -220,7 +222,6 @@ stages:
               dotnet restore "$(Build.SourcesDirectory)"
             displayName: 'Restore Dependencies'
 
-          # serves as second checking layer as the package vulnerabilities is checked during package restore in previous jobs
           - script: |
               snyk test \
                 --severity-threshold=low \
@@ -232,7 +233,6 @@ stages:
             env:
               SNYK_TOKEN: $(SnykToken)
 
-          # the check will include security anti-patterns like SQL injection, hardcoded secrets, insecure deserialization, etc.
           - script: |
               snyk code test \
                 --severity-threshold=low \
@@ -242,7 +242,6 @@ stages:
             env:
               SNYK_TOKEN: $(SnykToken)
 
-          # exclude base image vulnerabilities since they are not within our control
           - script: |
               snyk container test ${{ parameters.imageName }}:latest \
                 --severity-threshold=low \
