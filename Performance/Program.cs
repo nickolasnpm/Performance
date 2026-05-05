@@ -34,7 +34,7 @@ builder.Services.AddDbContextPool<UserDbContext>((sp,options) =>
                     maxRetryDelay: TimeSpan.FromSeconds(5),
                     errorNumbersToAdd: null
                 )
-                .CommandTimeout(300);
+                .CommandTimeout(3600);
 
             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "Performance");
         }
