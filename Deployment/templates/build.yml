@@ -37,10 +37,11 @@ stages:
           - script: |
               echo "Source branch: $(System.PullRequest.SourceBranch)"
               
-              if [[ "$(System.PullRequest.SourceBranch)" =~ ^refs/heads/(feature|chore) ]]; then
+              # by right this rule should be different for different environment
+              if [[ "$(System.PullRequest.SourceBranch)" =~ ^refs/heads/(feature|develop|chore) ]]; then
                 echo "Branch name is valid."
               else
-                echo "##vso[task.logissue type=error]Branch '$(System.PullRequest.SourceBranch)' must start with feature or chore"
+                echo "##vso[task.logissue type=error]Branch '$(System.PullRequest.SourceBranch)' must start with feature, develop or chore"
                 exit 1
               fi
             displayName: 'Validate Branch Naming Convention'
