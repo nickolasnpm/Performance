@@ -17,6 +17,7 @@ namespace Performance.Infrastructure.Persistence.Extensions
             {
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<UserDbContext>>();
                 logger.LogError(ex, "Database Migration Failed on Raspberry Pi.");
+                throw;
             }
         }
     }
