@@ -12,8 +12,8 @@ using Performance.Infrastructure.Persistence;
 namespace Performance.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20260502163543_Seed_New_Data_SupportTickets")]
-    partial class Seed_New_Data_SupportTickets
+    [Migration("20260507154311_Seed_New_Data_Roles")]
+    partial class Seed_New_Data_Roles
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

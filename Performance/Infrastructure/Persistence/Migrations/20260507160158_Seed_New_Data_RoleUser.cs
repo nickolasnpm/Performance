@@ -5,7 +5,7 @@
 namespace Performance.Migrations
 {
     /// <inheritdoc />
-    public partial class Seed_New_Data_Loans : Migration
+    public partial class Seed_New_Data_RoleUser : Migration
     {
         private const int totalData = 1_000_000;
         private const int totalPerBatch = 100_000;
@@ -16,8 +16,9 @@ namespace Performance.Migrations
         {
             migrationBuilder.Sql(@"
                 IF EXISTS (
-                    SELECT 1 FROM [Performance].[Loans]
-                    WHERE [CreatedBy] = 'data seeding'
+                    SELECT 1 FROM [Performance].[RoleUser] RU
+                    INNER JOIN [Performance].[Roles] R ON R.[Id] = RU.[RolesId]
+                    WHERE R.[Name] = N'user'
                 )
                 BEGIN
                     RETURN;
@@ -38,14 +39,14 @@ namespace Performance.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                DELETE FROM [Performance].[Loans]
-                WHERE [CreatedBy] = 'data seeding';
+                DELETE RU
+                FROM [Performance].[RoleUser] RU
+                INNER JOIN [Performance].[Users] U ON U.[Id] = RU.[UsersId]
+                WHERE U.[CreatedBy] = 'data seeding';
             ");
         }
 
         private static string BuildBatchSql(int startId, int endId) => $@"
-            DECLARE @Now DATETIMEOFFSET = SYSDATETIMEOFFSET();
-
             WITH
             E2(N) AS (
                 SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
@@ -59,29 +60,14 @@ namespace Performance.Migrations
                     ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) + {startId - 1}
                 FROM E8
             )
-            INSERT INTO [Performance].[Loans]
-                ([LoanType], [PrincipalAmount], [InterestRate], [InterestAmount],
-                [TotalAmountToRepay], [RemainingBalance], [TotalLoanTerms],
-                [RemainingLoanTerms], [MonthlyPaymentAmount], [IsFullyPaid],
-                [UserId], [CreatedAt], [CreatedBy], [UpdatedAt], [UpdatedBy])
+            INSERT INTO [Performance].[RoleUser]
+                ([RolesId], [UsersId])
             SELECT
-                N'Housing Loan',
-                CAST(500000.00 AS DECIMAL(18, 2)),
-                CAST(4.00      AS DECIMAL(18, 2)),
-                CAST(359348.80 AS DECIMAL(18, 2)),
-                CAST(859348.80 AS DECIMAL(18, 2)),
-                CAST(859348.80 AS DECIMAL(18, 2)),
-                360,
-                360,
-                CAST(2387.08   AS DECIMAL(18, 2)),
-                CAST(0         AS BIT),
-                U.[Id],
-                @Now,
-                N'data seeding',
-                @Now,
-                N'data seeding'
+                R.[Id],
+                U.[Id]
             FROM Tally
-            INNER JOIN [Performance].[Users] U ON U.[Username] = N'user' + CAST(N AS NVARCHAR(10));
+            INNER JOIN [Performance].[Users] U ON U.[Username] = N'user' + CAST(N AS NVARCHAR(10))
+            INNER JOIN [Performance].[Roles] R ON R.[Name] = N'user';
             ";
     }
 }

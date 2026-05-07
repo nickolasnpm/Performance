@@ -5,7 +5,7 @@
 namespace Performance.Migrations
 {
     /// <inheritdoc />
-    public partial class Seed_New_Data_Loans : Migration
+    public partial class Seed_New_Data_SupportTickets : Migration
     {
         private const int totalData = 1_000_000;
         private const int totalPerBatch = 100_000;
@@ -16,7 +16,7 @@ namespace Performance.Migrations
         {
             migrationBuilder.Sql(@"
                 IF EXISTS (
-                    SELECT 1 FROM [Performance].[Loans]
+                    SELECT 1 FROM [Performance].[SupportTickets]
                     WHERE [CreatedBy] = 'data seeding'
                 )
                 BEGIN
@@ -38,7 +38,7 @@ namespace Performance.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                DELETE FROM [Performance].[Loans]
+                DELETE FROM [Performance].[SupportTickets]
                 WHERE [CreatedBy] = 'data seeding';
             ");
         }
@@ -59,29 +59,34 @@ namespace Performance.Migrations
                     ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) + {startId - 1}
                 FROM E8
             )
-            INSERT INTO [Performance].[Loans]
-                ([LoanType], [PrincipalAmount], [InterestRate], [InterestAmount],
-                [TotalAmountToRepay], [RemainingBalance], [TotalLoanTerms],
-                [RemainingLoanTerms], [MonthlyPaymentAmount], [IsFullyPaid],
+            INSERT INTO [Performance].[SupportTickets]
+                ([Subject], [Description], [Priority], [IsResolved],
                 [UserId], [CreatedAt], [CreatedBy], [UpdatedAt], [UpdatedBy])
             SELECT
-                N'Housing Loan',
-                CAST(500000.00 AS DECIMAL(18, 2)),
-                CAST(4.00      AS DECIMAL(18, 2)),
-                CAST(359348.80 AS DECIMAL(18, 2)),
-                CAST(859348.80 AS DECIMAL(18, 2)),
-                CAST(859348.80 AS DECIMAL(18, 2)),
-                360,
-                360,
-                CAST(2387.08   AS DECIMAL(18, 2)),
-                CAST(0         AS BIT),
+                CASE (N % 5)
+                    WHEN 0 THEN N'Loan repayment query'
+                    WHEN 1 THEN N'Update contact information'
+                    WHEN 2 THEN N'Transaction not reflected in statement'
+                    WHEN 3 THEN N'Unable to access my account'
+                    WHEN 4 THEN N'Credit card payment issue'
+                END,
+                CASE (N % 5)
+                    WHEN 0 THEN N'I need clarification on my loan repayment schedule and interest calculation.REF' + RIGHT(REPLICATE(N'0', 14) + CAST(N AS NVARCHAR(14)), 14)
+                    WHEN 1 THEN N'I would like to update my phone number and email address on file.REF' + RIGHT(REPLICATE(N'0', 14) + CAST(N AS NVARCHAR(14)), 14)
+                    WHEN 2 THEN N'My recent transaction is not showing in my bank statement. Transaction reference: REF' + RIGHT(REPLICATE(N'0', 14) + CAST(N AS NVARCHAR(14)), 14)
+                    WHEN 3 THEN N'I am unable to login to my account. Please help me reset my password.REF' + RIGHT(REPLICATE(N'0', 14) + CAST(N AS NVARCHAR(14)), 14)
+                    WHEN 4 THEN N'I made a credit card payment but it has not been processed yet.REF' + RIGHT(REPLICATE(N'0', 14) + CAST(N AS NVARCHAR(14)), 14)
+                END,
+                (N % 3) + 1,
+                CAST(0 AS BIT),
                 U.[Id],
                 @Now,
                 N'data seeding',
                 @Now,
                 N'data seeding'
             FROM Tally
-            INNER JOIN [Performance].[Users] U ON U.[Username] = N'user' + CAST(N AS NVARCHAR(10));
+            INNER JOIN [Performance].[Users] U
+                ON U.[Username] = N'user' + CAST(N AS NVARCHAR(10));
             ";
     }
 }

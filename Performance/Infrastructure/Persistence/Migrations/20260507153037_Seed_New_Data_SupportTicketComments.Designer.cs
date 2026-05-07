@@ -12,7 +12,7 @@ using Performance.Infrastructure.Persistence;
 namespace Performance.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20260502164018_Seed_New_Data_SupportTicketComments")]
+    [Migration("20260507153037_Seed_New_Data_SupportTicketComments")]
     partial class Seed_New_Data_SupportTicketComments
     {
         /// <inheritdoc />

@@ -12,7 +12,7 @@ using Performance.Infrastructure.Persistence;
 namespace Performance.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20260502162045_Seed_New_Data_RoleUser")]
+    [Migration("20260507160158_Seed_New_Data_RoleUser")]
     partial class Seed_New_Data_RoleUser
     {
         /// <inheritdoc />
