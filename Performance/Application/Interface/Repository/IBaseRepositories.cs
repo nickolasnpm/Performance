@@ -4,6 +4,7 @@
     {
         IQueryable<TEntity> GetAll();
         Task Create(IEnumerable<TEntity> entities);
+        Task Update(IEnumerable<TEntity> entities);
         Task Delete(HashSet<long> ids);
     }
 }

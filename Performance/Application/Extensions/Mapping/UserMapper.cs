@@ -41,7 +41,7 @@ namespace Performance.Application.Extensions.Mapping
                 PhoneNumber = request.PhoneNumber,
                 ProfilePictureUrl = request.ProfilePictureUrl,
                 CreatedAt = DateTimeOffset.Now,
-                CreatedBy = "User" // has to assign here as BulkInsertAsync does not trigger SaveChangeAsync interceptor
+                CreatedBy = "BulkInsertAsync" // has to assign here as BulkInsertAsync does not trigger SaveChangeAsync interceptor
             };
         }
 
@@ -54,6 +54,8 @@ namespace Performance.Application.Extensions.Mapping
                 existingUser.DateOfBirth = request.DateOfBirth ?? existingUser.DateOfBirth;
                 existingUser.PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber;
                 existingUser.ProfilePictureUrl = request.ProfilePictureUrl ?? existingUser.ProfilePictureUrl;
+                existingUser.UpdatedAt = DateTimeOffset.Now;
+                existingUser.UpdatedBy = "BulkUpdateAsync"; // has to assign here as BulkUpdateAsync does not trigger SaveChangeAsync interceptor
             }
         }
     }

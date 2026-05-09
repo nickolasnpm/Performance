@@ -94,6 +94,11 @@ namespace Performance.Infrastructure.Persistence.Repositories
             await userDbContext.BulkInsertAsync(entities);
         }
 
+        public async Task Update(IEnumerable<User> entities)
+        {
+            await userDbContext.BulkUpdateAsync(entities);
+        }
+
         public async Task Delete(HashSet<long> ids)
         {
             await userDbContext.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();

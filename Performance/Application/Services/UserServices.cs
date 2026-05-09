@@ -8,6 +8,7 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
+using Performance.Domain.Entity;
 
 namespace Performance.Application.Services
 {
@@ -150,6 +151,16 @@ namespace Performance.Application.Services
                 return Result<bool, ResultError>.Failure(new ResultError
                 { ErrorType = ErrorType.BatchSizeExceeded, Message = MaxBatchSizeErrorResponse });
 
+            var duplicateEncryptedIds = requestDTOs
+                .GroupBy(dto => idHelper.DecryptId(dto.Id))
+                .Where(g => g.Count() > 1)
+                .SelectMany(g => g.Select(dto => dto.Id))
+                .ToList();
+
+            if (duplicateEncryptedIds.Any())
+                return Result<bool, ResultError>.Failure(new ResultError
+                { ErrorType = ErrorType.ValidationError, Message = "Duplicate user IDs in request.", Payload = duplicateEncryptedIds });
+
             var dtoById = new Dictionary<long, UpdateUserRequestDTO>(requestDTOs.Count);
 
             foreach (var dto in requestDTOs)
@@ -163,13 +174,19 @@ namespace Performance.Application.Services
             var notFoundIds = dtoById.Keys.Except(existingUsersById.Keys).ToList();
 
             if (notFoundIds.Any())
+            {
+                var notFoundEncryptedIds = notFoundIds
+                    .Select(id => dtoById[id].Id)
+                    .ToList();
+
                 return Result<bool, ResultError>.Failure(new ResultError
-                { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundIds });
+                { ErrorType = ErrorType.NotFound, Message = "Some users are not found.", Payload = notFoundEncryptedIds });
+            }
 
             foreach (var (id, dto) in dtoById)
                 dto.UpdateRequestToEntity(existingUsersById[id]);
 
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.UserRepository.Update(existingUsersById.Values);
 
             return Result<bool, ResultError>.Success(true);
         }
