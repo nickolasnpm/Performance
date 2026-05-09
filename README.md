@@ -91,6 +91,7 @@ All the below decision is made for development speed and simplicity, and may not
 - Data validation in http request object is checked by using data annotation instead of fluent validation
 - Manual mapping from database entity to DTOs instead of using external library such as Automapper
 - Using custom in-memory cache implementation instead of external caching tool or library at all
+- Only support single column sort where `long` primary key Id as it default value. If multiple columns sort is needed, consider using filter
 
 ## H. Things to do
 

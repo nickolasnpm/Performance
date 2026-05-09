@@ -4,6 +4,8 @@ namespace Performance.Application.DTOs.Users
 {
     public record UpdateUserRequestDTO(
         string Id,
+        [StringLength(100)] string UserName,
+        [StringLength(100)] string Email,
         [StringLength(100)] string? FirstName,
         [StringLength(100)] string? LastName,
         DateOnly? DateOfBirth,

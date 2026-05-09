@@ -1,9 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Performance.Domain.Entity;
-
-namespace Performance.Application.Extensions.Repository.EntityIncludeOptions
+﻿namespace Performance.Application.Extensions.Repository.EntityIncludeOptions
 {
-    public record UserIncludeOptions: BaseIncludeOptions<User>
+    public record UserIncludeOptions
     {
         public bool Roles { get; init; }
         public bool Address { get; init; }
@@ -21,18 +18,6 @@ namespace Performance.Application.Extensions.Repository.EntityIncludeOptions
             Loans = true,
             SupportTickets = true
         };
-
-        internal override IQueryable<User> ApplyTo(IQueryable<User> query)
-        {
-            if (Roles) query = query.Include(u => u.Roles);
-            if (Address) query = query.Include(u => u.Address);
-            if (BankAccount) query = query.Include(u => u.BankAccount).ThenInclude(ba => ba != null ? ba.Transactions : null);
-            if (CreditCards) query = query.Include(u => u.CreditCards).ThenInclude(cc => cc.Statements);
-            if (Loans) query = query.Include(u => u.Loans).ThenInclude(l => l.Repayments);
-            if (SupportTickets) query = query.Include(u => u.SupportTickets).ThenInclude(st => st.Comments);
-
-            return query;
-        }
 
         public static UserIncludeOptions None => new();
     }

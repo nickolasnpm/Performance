@@ -8,7 +8,6 @@ using Performance.Application.Extensions.Repository.EntityIncludeOptions;
 using Performance.Application.Interface.Security;
 using Performance.Application.Interface.Services;
 using Performance.Application.Interface.UnitOfWork;
-using Performance.Domain.Entity;
 
 namespace Performance.Application.Services
 {
@@ -217,7 +216,8 @@ namespace Performance.Application.Services
         #region private methods
         private async Task<ListResponseDTO<UserDTO>> OffsetPaginationAsync(OffsetPaginationRequest request)
         {
-            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(request, UserIncludeOptions.All);
+            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByOffset(
+                request, UserIncludeOptions.All);
 
             int totalPages = (int)Math.Ceiling((double)totalCount / request.Size);
 
@@ -243,7 +243,9 @@ namespace Performance.Application.Services
             if (!string.IsNullOrEmpty(request.Cursor))
                 cursorValue = idHelper.DecryptId(request.Cursor);
 
-            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(cursorValue, request, UserIncludeOptions.All);
+            var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(
+                cursorValue, request, UserIncludeOptions.All);
+            
             var result = await users.ToListAsync();
 
             bool hasMore = result.Count > request.Size;

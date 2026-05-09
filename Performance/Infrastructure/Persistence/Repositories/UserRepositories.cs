@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 using Performance.Application.Common.Models;
 using Performance.Application.Common.Settings;
 using Performance.Application.DTOs;
-using Performance.Application.Extensions.Repository;
 using Performance.Application.Extensions.Repository.EntityIncludeOptions;
+using Performance.Application.Extensions.Repository.EntityColumnSort;
 using Performance.Application.Interface.Repository;
 using Performance.Domain.Entity;
 using Performance.Infrastructure.Caching;
@@ -44,9 +44,10 @@ namespace Performance.Infrastructure.Persistence.Repositories
             }
 
             queryable = queryable.ApplyIncludes(includeOptions);
+            queryable = queryable.ApplySorting(request.SortBy, request.IsAscending);
 
             return new PaginatedResult<User>(
-                Items: queryable.OrderBy(u => u.Id).Skip((request.Page! - 1) * request.Size).Take(request.Size),
+                Items: queryable.Skip((request.Page! - 1) * request.Size).Take(request.Size),
                 TotalCount: totalCount);
         }
 

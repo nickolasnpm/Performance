@@ -47,6 +47,7 @@ namespace Performance.Application.Extensions.Mapping
 
         extension(UpdateUserRequestDTO request)
         {
+            // leave out UserName and Email as both are non-changeable and only needed for testing purpose convenient
             public void UpdateRequestToEntity(User existingUser)
             {
                 existingUser.FirstName = request.FirstName ?? existingUser.FirstName;
