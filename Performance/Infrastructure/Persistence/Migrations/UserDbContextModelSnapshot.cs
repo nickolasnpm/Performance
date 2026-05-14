@@ -10,7 +10,7 @@ using Performance.Infrastructure.Persistence;
 
 namespace Performance.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(PerformanceDbContext))]
     partial class UserDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

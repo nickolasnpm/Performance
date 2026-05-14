@@ -11,7 +11,7 @@ using Performance.Infrastructure.Persistence;
 
 namespace Performance.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(PerformanceDbContext))]
     [Migration("20260509120808_Change_Columns_Constraints_Auditable")]
     partial class Change_Columns_Constraints_Auditable
     {

@@ -3,7 +3,7 @@ using Performance.Domain.Entity;
 
 namespace Performance.Infrastructure.Persistence
 {
-    public class UserDbContext (DbContextOptions options) : DbContext(options)
+    public class PerformanceDbContext (DbContextOptions options) : DbContext(options)
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }

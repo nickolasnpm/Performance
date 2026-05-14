@@ -16,5 +16,18 @@ namespace Performance.Application.Extensions.Mapping
                 PostalCode: address.PostalCode,
                 Country: address.Country);
         }
+
+        extension(AddAddressRequestDTO requestDTO)
+        {
+            public Address ToEntity(User user) => new()
+            {
+                AddressLine = requestDTO.AddressLine,
+                City = requestDTO.City,
+                State = requestDTO.State,
+                PostalCode = requestDTO.PostalCode,
+                Country = requestDTO.Country,
+                User = user
+            };
+        }
     }
 }

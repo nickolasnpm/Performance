@@ -1,17 +1,7 @@
-﻿using Performance.Application.Interface.Repository;
-using Performance.Infrastructure.Persistence.Repositories;
-
-namespace Performance.Application.Interface.UnitOfWork
+﻿namespace Performance.Application.Interface.UnitOfWork
 {
-    public interface IUnitOfWork : IDisposable
+    public interface IUnitOfWork :  IUnitOfWorkRepository, IUnitOfWorkTransaction, IDisposable
     {
-        // repositories
-        IUserRepositories UserRepository { get; }
-
-        // Transaction Management
-        Task BeginTransactionAsync(CancellationToken cancellationToken = default);
-        Task CommitAsync(CancellationToken cancellationToken = default);
-        Task RollbackAsync(CancellationToken cancellationToken = default);
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        
     }
 }

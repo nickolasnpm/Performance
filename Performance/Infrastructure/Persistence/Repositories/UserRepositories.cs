@@ -12,12 +12,12 @@ using Performance.Infrastructure.Caching;
 
 namespace Performance.Infrastructure.Persistence.Repositories
 {
-    public class UserRepositories(UserDbContext userDbContext, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
+    public class UserRepositories(PerformanceDbContext context, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
         : IUserRepositories
     {
         public IQueryable<User> GetAll()
         {
-            return userDbContext.Users.AsNoTracking();
+            return context.Users.AsNoTracking();
         }
 
         public async Task<PaginatedResult<User>> GetPaginatedUsersByOffset(OffsetPaginationRequest request, UserIncludeOptions includeOptions)
@@ -92,17 +92,22 @@ namespace Performance.Infrastructure.Persistence.Repositories
 
         public async Task Create(IEnumerable<User> entities)
         {
-            await userDbContext.BulkInsertAsync(entities);
+            await context.BulkInsertAsync(entities);
+        }
+
+        public async Task Create(User user)
+        {
+            await context.Users.AddAsync(user);
         }
 
         public async Task Update(IEnumerable<User> entities)
         {
-            await userDbContext.BulkUpdateAsync(entities);
+            await context.BulkUpdateAsync(entities);
         }
 
         public async Task Delete(HashSet<long> ids)
         {
-            await userDbContext.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();
+            await context.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();
         }
     }
 }

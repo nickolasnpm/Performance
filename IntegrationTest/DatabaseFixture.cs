@@ -15,17 +15,17 @@ namespace IntegrationTest
         )
         .Build();
 
-        public UserDbContext DbContext { get; private set; } = null!;
+        public PerformanceDbContext DbContext { get; private set; } = null!;
 
         public async Task InitializeAsync()
         {
             await _container.StartAsync();
 
-            var options = new DbContextOptionsBuilder<UserDbContext>()
+            var options = new DbContextOptionsBuilder<PerformanceDbContext>()
                 .UseSqlServer(_container.GetConnectionString())
                 .Options;
 
-            DbContext = new UserDbContext(options);
+            DbContext = new PerformanceDbContext(options);
             await DbContext.Database.EnsureCreatedAsync();
             await SeedData();
         }

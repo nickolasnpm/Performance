@@ -11,7 +11,7 @@ using Performance.Infrastructure.Persistence;
 
 namespace Performance.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(PerformanceDbContext))]
     [Migration("20260507151628_Seed_New_Data_SupportTickets")]
     partial class Seed_New_Data_SupportTickets
     {

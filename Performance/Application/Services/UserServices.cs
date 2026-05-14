@@ -55,7 +55,7 @@ namespace Performance.Application.Services
                 { ErrorType = ErrorType.NotFound, Message = "User not found." });
         }
 
-        public async Task<Result<bool, ResultError>> CreateUsers(List<AddUserRequestDTO> requestDTOs)
+        public async Task<Result<bool, ResultError>> CreateBulkUsers(List<AddUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError
@@ -144,7 +144,30 @@ namespace Performance.Application.Services
             return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, ResultError>> UpdateUsers(List<UpdateUserRequestDTO> requestDTOs)
+        public async Task<Result<bool, ResultError>> CreateUser(AddUserRequestDTO requestDTO)
+        {
+            var existingUser = await unitOfWork.UserRepository.GetAll()
+                .FirstOrDefaultAsync(u => u.Username == requestDTO.Username || u.Email == requestDTO.Email);
+
+            if (existingUser != null)
+                return Result<bool, ResultError>.Failure(new ResultError
+                { ErrorType = ErrorType.Conflict, Message = "Username or email already exist" });
+
+            var userToCreate = requestDTO.AddRequestToEntity();
+            await unitOfWork.UserRepository.Create(userToCreate);
+
+            if (requestDTO.Address != null)
+            {
+                var addressToCreate = requestDTO.Address.ToEntity(userToCreate);
+                await unitOfWork.AddressRepository.Create(addressToCreate);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+
+            return Result<bool, ResultError>.Success(true);
+        }
+
+        public async Task<Result<bool, ResultError>> UpdateBulkUsers(List<UpdateUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError
@@ -190,7 +213,7 @@ namespace Performance.Application.Services
             return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, ResultError>> DeleteUsers(HashSet<string> ids)
+        public async Task<Result<bool, ResultError>> DeleteBulkUsers(HashSet<string> ids)
         {
             if (ids.Count > MaxBatchSize)
                 return Result<bool, ResultError>.Failure(new ResultError
@@ -245,7 +268,7 @@ namespace Performance.Application.Services
 
             var (users, totalCount) = await unitOfWork.UserRepository.GetPaginatedUsersByCursor(
                 cursorValue, request, UserIncludeOptions.All);
-            
+
             var result = await users.ToListAsync();
 
             bool hasMore = result.Count > request.Size;

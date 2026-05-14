@@ -7,7 +7,7 @@ namespace Performance.Infrastructure.Persistence.Extensions
         public static async Task ApplyMigrations(this IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+            var context = scope.ServiceProvider.GetRequiredService<PerformanceDbContext>();
 
             try
             {
@@ -15,7 +15,7 @@ namespace Performance.Infrastructure.Persistence.Extensions
             }
             catch (Exception ex)
             {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<UserDbContext>>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<PerformanceDbContext>>();
                 logger.LogError(ex, "Database Migration Failed on Raspberry Pi.");
                 throw;
             }

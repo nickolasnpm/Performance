@@ -20,7 +20,8 @@ namespace Performance.Domain.Entity
         [StringLength(100)]
         public required string Country { get; set; }
 
-        public required long UserId { get; set; }
+        [Required]
+        public long UserId { get; set; }
 
         [JsonIgnore]
         public User? User { get; set; }

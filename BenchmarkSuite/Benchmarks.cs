@@ -62,7 +62,7 @@ namespace BenchmarkSuite
             using (var serviceProvider = services.BuildServiceProvider())
             using (var scope = serviceProvider.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<PerformanceDbContext>();
                 _totalRecords = await dbContext.Users.CountAsync();
             }
 
@@ -119,7 +119,7 @@ namespace BenchmarkSuite
                 _configuration!.GetSection("IdEncryptionSettings")
             );
 
-            services.AddDbContextPool<UserDbContext>(options =>
+            services.AddDbContextPool<PerformanceDbContext>(options =>
                 options.UseSqlServer(
                     _configuration?.GetConnectionString("DefaultConnection"),
                     sqlOptions =>

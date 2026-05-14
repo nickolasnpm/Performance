@@ -24,6 +24,7 @@ namespace Performance.Infrastructure.Persistence.Interceptors
             var now = DateTimeOffset.UtcNow;
 
             // no context at the moment, so we can't get the user name from the claims, but we can set a default value
+            // if we have context, the default value can also becomes indicator for a system created records
             var userName = httpContextAccessor.HttpContext?.User?
                 .FindFirstValue(ClaimTypes.NameIdentifier) ?? "Saved by interceptor";
 

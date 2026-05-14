@@ -23,7 +23,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<AuditSaveChangesInterceptor>();
 
-builder.Services.AddDbContextPool<UserDbContext>((sp,options) =>
+builder.Services.AddDbContextPool<PerformanceDbContext>((sp,options) =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>

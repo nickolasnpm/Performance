@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Performance.Application.DTOs.Addresses;
 
 namespace Performance.Application.DTOs.Users
 {
@@ -9,6 +10,7 @@ namespace Performance.Application.DTOs.Users
         [StringLength(100)] string LastName,
         DateOnly DateOfBirth,
         [Phone] string PhoneNumber,
-        [StringLength(250)] string? ProfilePictureUrl
+        [StringLength(250)] string? ProfilePictureUrl,
+        AddAddressRequestDTO? Address = null
     );
 }

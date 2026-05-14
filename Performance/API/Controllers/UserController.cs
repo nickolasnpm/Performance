@@ -10,6 +10,8 @@ namespace Performance.API.Controllers
     public class UserController(IUserServices userServices)
         : BaseController
     {
+        private const string _bulkRoute = "bulk";
+
         [HttpGet]
         [ProducesResponseType(typeof(ListResponseDTO<UserDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -31,36 +33,47 @@ namespace Performance.API.Controllers
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
         }
 
-        [HttpPost]
+        [HttpPost(_bulkRoute)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> CreateUsers([FromBody] List<AddUserRequestDTO> requestDTOs)
         {
-            var result = await userServices.CreateUsers(requestDTOs);
+            var result = await userServices.CreateBulkUsers(requestDTOs);
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
         }
 
-        [HttpPut]
+        [HttpPost]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> CreateSingleUser([FromBody] AddUserRequestDTO requestDTO)
+        {
+            var result = await userServices.CreateUser(requestDTO);
+            return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
+        }
+
+        [HttpPut(_bulkRoute)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> UpdateUsers([FromBody] List<UpdateUserRequestDTO> requestDTOs)
         {
-            var result = await userServices.UpdateUsers(requestDTOs);
+            var result = await userServices.UpdateBulkUsers(requestDTOs);
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
         }
 
-        [HttpDelete]
+        [HttpDelete(_bulkRoute)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> DeleteUsers([FromBody] HashSet<string> ids)
         {
-            var result = await userServices.DeleteUsers(ids);
+            var result = await userServices.DeleteBulkUsers(ids);
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
         }
     }
