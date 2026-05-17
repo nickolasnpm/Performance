@@ -12,7 +12,7 @@ using Performance.Infrastructure.Caching;
 
 namespace Performance.Infrastructure.Persistence.Repositories
 {
-    public class UserRepositories(PerformanceDbContext context, IOptions<AppSettings> appSettings, IOptions<CacheSettings> cacheSettings)
+    public class UserRepositories(PerformanceDbContext context, IOptions<CacheSettings> cacheSettings)
         : IUserRepositories
     {
         public IQueryable<User> GetAll()
@@ -24,19 +24,7 @@ namespace Performance.Infrastructure.Persistence.Repositories
         {
             IQueryable<User> queryable = GetAll();
 
-            var totalCount = 0;
-
-            if (appSettings.Value.IsUseCache)
-            {
-                var userCountCacheSettings = cacheSettings.Value.Items[CacheKeys.UserCount];
-
-                totalCount = await AsyncCache<int>.GetOrUpdateAsync(userCountCacheSettings.Key,
-                    TimeSpan.FromMinutes(userCountCacheSettings.ExpirationMinutes), () => queryable.CountAsync());
-            }
-            else
-            {
-                totalCount = await queryable.CountAsync();
-            }
+            var totalCount = await GetCachedUserCount(queryable);
 
             if (includeOptions == UserIncludeOptions.All)
             {
@@ -55,19 +43,7 @@ namespace Performance.Infrastructure.Persistence.Repositories
         {
             IQueryable<User> queryable = GetAll();
 
-            int totalCount = 0;
-
-            if (appSettings.Value.IsUseCache)
-            {
-                var userCountCacheSettings = cacheSettings.Value.Items[CacheKeys.UserCount];
-
-                totalCount = await AsyncCache<int>.GetOrUpdateAsync(userCountCacheSettings.Key,
-                    TimeSpan.FromMinutes(userCountCacheSettings.ExpirationMinutes), () => queryable.CountAsync());
-            }
-            else
-            {
-                totalCount = await queryable.CountAsync();
-            }
+            int totalCount = await GetCachedUserCount(queryable);
 
             if (request.IsQueryPreviousPage)
             {
@@ -108,6 +84,19 @@ namespace Performance.Infrastructure.Persistence.Repositories
         public async Task Delete(HashSet<long> ids)
         {
             await context.Users.Where(u => ids.Contains(u.Id)).ExecuteDeleteAsync();
+        }
+
+        private async Task<int> GetCachedUserCount(IQueryable<User> queryable)
+        {
+            if (cacheSettings.Value.Enabled)
+            {
+                return await AsyncCache<int>.GetOrUpdateAsync(nameof(cacheSettings.Value.UserCount),
+                    TimeSpan.FromMinutes(cacheSettings.Value.UserCount.ExpirationMinutes), () => queryable.CountAsync());
+            }
+            else
+            {
+                return await queryable.CountAsync();
+            }
         }
     }
 }

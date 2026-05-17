@@ -23,7 +23,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<AuditSaveChangesInterceptor>();
 
-builder.Services.AddDbContextPool<PerformanceDbContext>((sp,options) =>
+builder.Services.AddDbContextPool<PerformanceDbContext>((sp, options) =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>
@@ -43,9 +43,15 @@ builder.Services.AddDbContextPool<PerformanceDbContext>((sp,options) =>
     .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>())
 );
 
-builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
-builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
-builder.Services.Configure<IdEncryptionSettings>(builder.Configuration.GetSection("IdEncryptionSettings"));
+builder.Services.AddOptions<CacheSettings>()
+    .BindConfiguration(nameof(CacheSettings))
+    .ValidateDataAnnotations()
+    .ValidateOnStart(); // <-- throws at startup, not at first use
+
+builder.Services.AddOptions<IdEncryptionSettings>()
+    .BindConfiguration(nameof(IdEncryptionSettings))
+    .ValidateDataAnnotations()
+    .ValidateOnStart(); // <-- throws at startup, not at first use
 
 builder.Services.AddScoped<IUserServices, UserServices>();
 

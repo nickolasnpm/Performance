@@ -1,19 +1,19 @@
-﻿namespace Performance.Application.Common.Settings
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Options;
+
+namespace Performance.Application.Common.Settings
 {
-    public class CacheSettings
+    public sealed class CacheSettings
     {
-        public Dictionary<string, CacheItemSettings> Items { get; set; } = new();
+        public bool Enabled { get; init; }
+
+        [ValidateObjectMembers]
+        public CacheItemSettings UserCount { get; init; } = new();
     }
 
-    public class CacheItemSettings
+    public sealed class CacheItemSettings
     {
-        public string Key { get; set; } = string.Empty;
-        public int ExpirationMinutes { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "ExpirationMinutes must be > 0")]
+        public int ExpirationMinutes { get; init; }
     }
-
-    public static class CacheKeys
-    {
-        public const string UserCount = "UserCount";
-    }
-
 }

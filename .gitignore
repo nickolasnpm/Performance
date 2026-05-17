@@ -43,6 +43,7 @@ ScaffoldingReadMe.txt
 .github
 .vscode
 */Performance.csproj.user
+*.lscache
 
 # Others
 ~$*
