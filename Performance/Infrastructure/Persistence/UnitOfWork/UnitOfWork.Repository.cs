@@ -11,7 +11,7 @@ namespace Performance.Infrastructure.Persistence.UnitOfWork
 
         IUserRepositories IUnitOfWorkRepository.UserRepository
         {
-            get { return _userRepository ??= new UserRepositories(context, appSettings, cacheSettings); }
+            get { return _userRepository ??= new UserRepositories(context, cacheSettings); }
         }
 
         IAddressRepositories IUnitOfWorkRepository.AddressRepository
