@@ -19,24 +19,17 @@ public class UserRepositoriesTests : IClassFixture<DatabaseFixture>
 
     private UserRepositories CreateSut(bool useCache = false, int cacheMinutes = 60)
     {
-        var appSettings = Options.Create(new AppSettings
-        {
-            IsUseCache = useCache
-        });
 
         var cacheSettings = Options.Create(new CacheSettings
         {
-            Items = new Dictionary<string, CacheItemSettings>
+            Enabled = useCache,
+            UserCount = new CacheItemSettings
             {
-                [CacheKeys.UserCount] = new()
-                {
-                    Key = CacheKeys.UserCount,
-                    ExpirationMinutes = cacheMinutes
-                }
+                ExpirationMinutes = cacheMinutes
             }
         });
 
-        return new UserRepositories(_fixture.DbContext, appSettings, cacheSettings);
+        return new UserRepositories(_fixture.DbContext, cacheSettings);
     }
 
     #region GetAll
