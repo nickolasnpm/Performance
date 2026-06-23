@@ -26,6 +26,17 @@ namespace Performance.Infrastructure.Persistence.Repositories
 
             var totalCount = await GetCachedUserCount(queryable);
 
+            if (!string.IsNullOrWhiteSpace(request.Search) && request.Search.Length >= 3)
+            {
+                var search = request.Search.Trim() + "%";
+
+                queryable = queryable.Where(u =>
+                    EF.Functions.Like(u.Username, search) ||
+                    EF.Functions.Like(u.Email, search) ||
+                    EF.Functions.Like(u.FirstName, search) ||
+                    EF.Functions.Like(u.LastName, search));
+            }
+
             if (includeOptions == UserIncludeOptions.All)
             {
                 queryable = queryable.AsSplitQuery();

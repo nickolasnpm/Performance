@@ -15,7 +15,8 @@ namespace Performance.Application.DTOs
         int Page = 1,
         int Size = 100,
         string? SortBy = "Id", // Default sorting column will be Id
-        bool IsAscending = true
+        bool IsAscending = true,
+        string? Search = null
     );
 
     public record CursorPaginationRequest(

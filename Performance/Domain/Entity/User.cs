@@ -5,6 +5,8 @@ namespace Performance.Domain.Entity
 {
     [Index(nameof(Username), IsUnique = true)]
     [Index(nameof(Email), IsUnique = true)]
+    [Index(nameof(FirstName))]
+    [Index(nameof(LastName))]
     public class User: AuditableEntity
     {
         [StringLength(50)]
