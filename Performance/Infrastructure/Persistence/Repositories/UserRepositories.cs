@@ -24,18 +24,20 @@ namespace Performance.Infrastructure.Persistence.Repositories
         {
             IQueryable<User> queryable = GetAll();
 
-            var totalCount = await GetCachedUserCount(queryable);
+            var hasSearch = !string.IsNullOrWhiteSpace(request.Search) && request.Search.Length >= 3;
 
-            if (!string.IsNullOrWhiteSpace(request.Search) && request.Search.Length >= 3)
+            if (hasSearch)
             {
-                var search = request.Search.Trim() + "%";
+                var search = request.Search!.Trim();
 
                 queryable = queryable.Where(u =>
-                    EF.Functions.Like(u.Username, search) ||
-                    EF.Functions.Like(u.Email, search) ||
-                    EF.Functions.Like(u.FirstName, search) ||
-                    EF.Functions.Like(u.LastName, search));
+                    u.Username.Contains(search) ||
+                    u.Email.Contains(search) ||
+                    u.FirstName.Contains(search) ||
+                    u.LastName.Contains(search));
             }
+
+            var totalCount = hasSearch ? await queryable.CountAsync() : await GetCachedUserCount(queryable);
 
             if (includeOptions == UserIncludeOptions.All)
             {

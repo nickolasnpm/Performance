@@ -34,7 +34,18 @@
 - Bulk delete implementation
 
     > In this project, I am using `ExecuteDeleteAsync()` method which will executes directly n the database - bypassing `SaveChangeAsync()` - and is not tracked back by the EF change tracker resulted in fast one round database trip and less memory allocation. It is also working very well in supporting `OnDelete` behaviors such as Cascade or Restrict.
+
     > `RemoveAsync()` is good but that requires the entire entity to be loaded into the memory and having multiple delete process may resulted in multiple database trip. Besides, as you can see from my `DeleteUsers()` method in `UserService()` class as well, it is only the Ids that need to be loaded into memory - making `RemoveAsync()` the least suitable choice.
+
+- Search Feature
+
+    > Contains() chosen for partial/mid-string matching (e.g. "john" matching email "bob.johnson@email.com") instead of `EF.Functions.Like(u.Username, $"%{search}%")` or `EF.Functions.FreeText / EF.Functions.Contains (SQL Server Full-Text Search)`, which fits user expectations for a search box better than prefix-only matching. EF translates this to LIKE '%search%' and auto-escapes SQL wildcard characters (%, _) present in user input.
+
+    > `EF.Functions.Like(u.Username, $"%{search}%")` produces the same SQL, but does NOT escape wildcard characters automatically, so a literal "%" or "_" in user input would behave as a SQL wildcard instead of a literal match. Contains() is safer by default for the same result.
+    
+    > `EF.Functions.FreeText` / `EF.Functions.Contains (SQL Server Full-Text Search)` would be the indexed equivalent at scale, but requires a full-text index/catalog to be set up on these columns; not used here since the table doesn't currently warrant that infrastructure.
+
+    > Cost: `LIKE '%search%'` has a leading wildcard, so it's not SARGable, no index seek, falls back to a scan per column. Fine at current scale; if this table grows large or the endpoint becomes high-frequency, move to `SQL Server Full-Text Search` or `PostgreSQL pg_trgm + GIN index` is a better choice.
 
 - Unit of work implementation
 
