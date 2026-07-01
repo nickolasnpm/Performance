@@ -84,11 +84,6 @@ namespace Performance.Infrastructure.Persistence.Repositories
             await context.BulkInsertAsync(entities);
         }
 
-        public async Task Create(User user)
-        {
-            await context.Users.AddAsync(user);
-        }
-
         public async Task Update(IEnumerable<User> entities)
         {
             await context.BulkUpdateAsync(entities);

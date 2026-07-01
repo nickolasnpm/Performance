@@ -44,17 +44,6 @@ namespace Performance.API.Controllers
             return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
         }
 
-        [HttpPost]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> CreateSingleUser([FromBody] AddUserRequestDTO requestDTO)
-        {
-            var result = await userServices.CreateUser(requestDTO);
-            return result.IsSuccess ? Ok(result.Data) : ToProblem(result.Error!);
-        }
-
         [HttpPut(_bulkRoute)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

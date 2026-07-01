@@ -144,29 +144,6 @@ namespace Performance.Application.Services
             return Result<bool, ResultError>.Success(true);
         }
 
-        public async Task<Result<bool, ResultError>> CreateUser(AddUserRequestDTO requestDTO)
-        {
-            var existingUser = await unitOfWork.UserRepository.GetAll()
-                .FirstOrDefaultAsync(u => u.Username == requestDTO.Username || u.Email == requestDTO.Email);
-
-            if (existingUser != null)
-                return Result<bool, ResultError>.Failure(new ResultError
-                { ErrorType = ErrorType.Conflict, Message = "Username or email already exist" });
-
-            var userToCreate = requestDTO.AddRequestToEntity();
-            await unitOfWork.UserRepository.Create(userToCreate);
-
-            if (requestDTO.Address != null)
-            {
-                var addressToCreate = requestDTO.Address.ToEntity(userToCreate);
-                await unitOfWork.AddressRepository.Create(addressToCreate);
-            }
-
-            await unitOfWork.SaveChangesAsync();
-
-            return Result<bool, ResultError>.Success(true);
-        }
-
         public async Task<Result<bool, ResultError>> UpdateBulkUsers(List<UpdateUserRequestDTO> requestDTOs)
         {
             if (requestDTOs.Count > MaxBatchSize)
